@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
+  <title>Destination Mystère</title>
+  <meta name="description" content="Tracker personnel de préparation : poids, alimentation et entraînement pour le grand départ." />
+
+  <!-- PWA -->
+  <link rel="manifest" href="./manifest.json" />
+  <meta name="theme-color" content="#0a2540" />
+
+  <!-- Support « écran d'accueil » iOS / Safari -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Mystère" />
+  <link rel="apple-touch-icon" href="./icons/icon-192.png" />
+
+  <link rel="icon" type="image/png" href="./icons/icon-192.png" />
+  <link rel="stylesheet" href="./css/styles.css" />
+</head>
+<body>
+
+  <!-- ===================== EN-TÊTE ===================== -->
+  <header class="app-header">
+    <h1 class="app-title">DESTINATION MYSTÈRE</h1>
+    <p class="app-subtitle">Préparation de l'expédition • Grand départ le 10 août 2027</p>
+  </header>
+
+  <!-- ===================== CONTENU (écrans) ===================== -->
+  <main id="main" class="app-main">
+
+    <!-- -------- ACCUEIL / TABLEAU DE BORD -------- -->
+    <section id="view-accueil" class="view" aria-label="Tableau de bord">
+      <div id="dash-greeting" class="greeting"></div>
+
+      <!-- Décompte -->
+      <div class="card countdown-card">
+        <div class="countdown-main">
+          <span id="cd-jours" class="countdown-number">—</span>
+          <span class="countdown-label">jours avant le grand départ</span>
+        </div>
+        <div class="countdown-sub">
+          <div><strong id="cd-semaines">—</strong><span>semaines restantes</span></div>
+          <div><strong id="cd-ecoules">—</strong><span>jours écoulés</span></div>
+        </div>
+      </div>
+
+      <!-- Progression -->
+      <div class="card">
+        <div class="card-head">
+          <h2>Progression</h2>
+          <span id="prog-percent" class="badge">0 %</span>
+        </div>
+        <div class="progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="prog-bar-aria">
+          <div id="prog-fill" class="progress-fill" style="width:0%"></div>
+        </div>
+        <div class="stat-grid">
+          <div class="stat"><span class="stat-val" id="st-actuel">—</span><span class="stat-lbl">Poids actuel</span></div>
+          <div class="stat"><span class="stat-val" id="st-perdu">—</span><span class="stat-lbl">Perdu</span></div>
+          <div class="stat"><span class="stat-val" id="st-reste">—</span><span class="stat-lbl">Reste</span></div>
+          <div class="stat"><span class="stat-val" id="st-rythme">—</span><span class="stat-lbl">Rythme /sem.</span></div>
+        </div>
+      </div>
+
+      <!-- Courbe du poids -->
+      <div class="card">
+        <div class="card-head">
+          <h2>Courbe du poids</h2>
+          <span class="legend"><i class="dot dot-line"></i>pesées <i class="dot dot-avg"></i>moy. 7 j</span>
+        </div>
+        <div id="dash-chart" class="chart-wrap"></div>
+      </div>
+
+      <!-- Entraînement 7 jours -->
+      <div class="card">
+        <div class="card-head"><h2>Entraînement — 7 derniers jours</h2></div>
+        <div class="stat-grid">
+          <div class="stat"><span class="stat-val" id="tr-seances">—</span><span class="stat-lbl">Séances</span></div>
+          <div class="stat"><span class="stat-val" id="tr-duree">—</span><span class="stat-lbl">Durée totale</span></div>
+          <div class="stat"><span class="stat-val" id="tr-distance">—</span><span class="stat-lbl">Distance cumulée</span></div>
+        </div>
+      </div>
+
+      <!-- Prochain jalon + jalons -->
+      <div class="card">
+        <div class="card-head"><h2>Jalons</h2></div>
+        <p class="next-milestone" id="next-milestone">—</p>
+        <ul id="milestones-list" class="milestones"></ul>
+      </div>
+    </section>
+
+    <!-- -------- POIDS -------- -->
+    <section id="view-poids" class="view" hidden aria-label="Poids">
+      <form id="form-poids" class="card form">
+        <h2>Ajouter une pesée</h2>
+        <label>Date<input type="date" name="date" required /></label>
+        <label>Poids (kg)<input type="number" name="poids" step="0.1" min="0" inputmode="decimal" required /></label>
+        <label>Tour de taille (cm) <span class="opt">optionnel</span><input type="number" name="tourTaille" step="0.1" min="0" inputmode="decimal" /></label>
+        <label>Note<textarea name="note" rows="2"></textarea></label>
+        <button type="submit" class="btn-primary">Enregistrer</button>
+      </form>
+
+      <div class="card">
+        <div class="card-head"><h2>Évolution</h2>
+          <span class="legend"><i class="dot dot-line"></i>pesées <i class="dot dot-avg"></i>moy. 7 j</span>
+        </div>
+        <div id="poids-chart" class="chart-wrap"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>Historique</h2></div>
+        <div id="poids-list" class="list"></div>
+      </div>
+    </section>
+
+    <!-- -------- ALIMENTATION -------- -->
+    <section id="view-alimentation" class="view" hidden aria-label="Alimentation">
+      <form id="form-alim" class="card form">
+        <h2>Journal du jour</h2>
+        <label>Date<input type="date" name="date" required /></label>
+        <label>Petit-déjeuner<textarea name="petitDejeuner" rows="2"></textarea></label>
+        <label>Déjeuner<textarea name="dejeuner" rows="2"></textarea></label>
+        <label>Dîner<textarea name="diner" rows="2"></textarea></label>
+        <label>Collations<textarea name="collations" rows="2"></textarea></label>
+
+        <fieldset class="scale">
+          <legend>Protéines (repas couverts)</legend>
+          <div class="seg" data-name="proteines">
+            <button type="button" data-val="1">1</button>
+            <button type="button" data-val="2">2</button>
+            <button type="button" data-val="3">3</button>
+          </div>
+        </fieldset>
+
+        <label>Légumes / fruits (portions)<input type="number" name="legumesFruits" min="0" step="1" inputmode="numeric" /></label>
+        <label>Eau (verres)<input type="number" name="eau" min="0" step="1" inputmode="numeric" /></label>
+        <label>Calories <span class="opt">optionnel</span><input type="number" name="calories" min="0" step="1" inputmode="numeric" /></label>
+
+        <fieldset class="scale">
+          <legend>Faim ressentie</legend>
+          <div class="seg" data-name="faim">
+            <button type="button" data-val="1">1</button>
+            <button type="button" data-val="2">2</button>
+            <button type="button" data-val="3">3</button>
+            <button type="button" data-val="4">4</button>
+            <button type="button" data-val="5">5</button>
+          </div>
+        </fieldset>
+
+        <fieldset class="scale">
+          <legend>Énergie</legend>
+          <div class="seg" data-name="energie">
+            <button type="button" data-val="1">1</button>
+            <button type="button" data-val="2">2</button>
+            <button type="button" data-val="3">3</button>
+            <button type="button" data-val="4">4</button>
+            <button type="button" data-val="5">5</button>
+          </div>
+        </fieldset>
+
+        <label>Note<textarea name="note" rows="2"></textarea></label>
+        <button type="submit" class="btn-primary">Enregistrer</button>
+      </form>
+
+      <div class="card">
+        <div class="card-head"><h2>Historique</h2></div>
+        <div id="alim-list" class="list"></div>
+      </div>
+    </section>
+
+    <!-- -------- ENTRAÎNEMENT -------- -->
+    <section id="view-entrainement" class="view" hidden aria-label="Entraînement">
+      <form id="form-entr" class="card form">
+        <h2>Ajouter une séance</h2>
+        <label>Date<input type="date" name="date" required /></label>
+        <label>Type
+          <select name="type" required>
+            <option value="Rando">Rando</option>
+            <option value="Marche chargée">Marche chargée</option>
+            <option value="Cardio">Cardio</option>
+            <option value="Renforcement">Renforcement</option>
+            <option value="Mobilité/Étirements">Mobilité/Étirements</option>
+            <option value="Tir">Tir</option>
+            <option value="Autre">Autre</option>
+          </select>
+        </label>
+        <label>Durée (min)<input type="number" name="duree" min="0" step="1" inputmode="numeric" /></label>
+        <label>Distance (km)<input type="number" name="distance" min="0" step="0.1" inputmode="decimal" /></label>
+        <label>Charge sac (kg)<input type="number" name="chargeSac" min="0" step="0.5" inputmode="decimal" /></label>
+        <label>Dénivelé (m)<input type="number" name="denivele" min="0" step="1" inputmode="numeric" /></label>
+        <fieldset class="scale">
+          <legend>RPE (effort perçu 1-10)</legend>
+          <div class="seg seg-wrap" data-name="rpe">
+            <button type="button" data-val="1">1</button>
+            <button type="button" data-val="2">2</button>
+            <button type="button" data-val="3">3</button>
+            <button type="button" data-val="4">4</button>
+            <button type="button" data-val="5">5</button>
+            <button type="button" data-val="6">6</button>
+            <button type="button" data-val="7">7</button>
+            <button type="button" data-val="8">8</button>
+            <button type="button" data-val="9">9</button>
+            <button type="button" data-val="10">10</button>
+          </div>
+        </fieldset>
+        <label>Note<textarea name="note" rows="2"></textarea></label>
+        <button type="submit" class="btn-primary">Enregistrer</button>
+      </form>
+
+      <div class="card">
+        <div class="card-head"><h2>Historique</h2></div>
+        <div id="entr-list" class="list"></div>
+      </div>
+    </section>
+
+    <!-- -------- REPÈRES SANTÉ -------- -->
+    <section id="view-reperes" class="view" hidden aria-label="Repères santé">
+      <div class="card">
+        <h2>À faire en premier</h2>
+        <ol class="info-list">
+          <li><strong>RDV chez le médecin traitant</strong> (remboursé) : feu vert pour « déficit + entraînement intense », prise de sang, rythme de perte sûr, et éventuelle cible calorique adaptée.</li>
+          <li>Repères nutrition gratuits et officiels : <strong>mangerbouger.fr</strong> (Programme National Nutrition Santé).</li>
+          <li>Optionnel : 3-4 séances chez un <strong>diététicien</strong> pour poser un cadre durable — souvent couvert en partie par la mutuelle.</li>
+        </ol>
+      </div>
+
+      <div class="card">
+        <h2>Principes sains</h2>
+        <p class="muted">Repères généraux — pas un régime personnalisé.</p>
+        <ul class="info-list">
+          <li>Perte progressive et régulière plutôt que brutale (à caler avec le médecin) : on préserve le muscle et la motivation.</li>
+          <li>Des protéines à chaque repas pour protéger la masse musculaire pendant la perte.</li>
+          <li>Légumes, fruits et fibres en abondance ; limiter les produits ultra-transformés et les boissons sucrées.</li>
+          <li>Bien s'hydrater, surtout autour des séances.</li>
+          <li>Manger suffisamment autour des entraînements — pas d'entraînement à jeun sévère.</li>
+          <li>Dormir 7 à 9 h : clé pour la perte de gras et la récupération.</li>
+          <li>Signaux d'alerte d'un sous-régime : fatigue persistante, faim ingérable, baisse de performance, sommeil dégradé → manger plus et/ou consulter.</li>
+        </ul>
+      </div>
+
+      <div class="card disclaimer">
+        Repères de santé publique à visée générale. Ne remplacent pas l'avis d'un médecin. En cas de trouble du comportement alimentaire, consulter un professionnel.
+      </div>
+    </section>
+
+    <!-- -------- PARAMÈTRES -------- -->
+    <section id="view-parametres" class="view" hidden aria-label="Paramètres">
+      <form id="form-params" class="card form">
+        <h2>Paramètres</h2>
+        <label>Prénom <span class="opt">optionnel</span><input type="text" name="prenom" /></label>
+        <label>Poids de départ (kg)<input type="number" name="poidsDepart" step="0.1" min="0" inputmode="decimal" required /></label>
+        <label>Poids cible (kg)<input type="number" name="poidsCible" step="0.1" min="0" inputmode="decimal" required /></label>
+        <label>Date de départ du programme<input type="date" name="dateDepart" required /></label>
+        <label>Date de l'expédition<input type="date" name="dateExpedition" required /></label>
+        <label>Cible calorique / jour <span class="opt">optionnel</span><input type="number" name="cibleCalories" min="0" step="1" inputmode="numeric" /></label>
+        <button type="submit" class="btn-primary">Enregistrer les paramètres</button>
+      </form>
+
+      <div class="card">
+        <h2>Sauvegarde</h2>
+        <p class="muted">iOS peut purger le stockage d'une app peu utilisée. Exporte régulièrement tes données pour ne rien perdre.</p>
+        <div class="btn-row">
+          <button id="btn-export-json" class="btn-secondary">Exporter (JSON)</button>
+          <button id="btn-export-csv" class="btn-secondary">Exporter (CSV)</button>
+        </div>
+        <div class="btn-row">
+          <button id="btn-import" class="btn-secondary">Importer (JSON)</button>
+          <input id="file-import" type="file" accept="application/json,.json" hidden />
+        </div>
+        <p id="io-msg" class="io-msg" role="status"></p>
+      </div>
+
+      <div class="card">
+        <h2>Réinitialiser</h2>
+        <p class="muted">Efface toutes les données locales de cet appareil. Action irréversible.</p>
+        <button id="btn-reset" class="btn-danger">Tout effacer</button>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ===================== BARRE D'ONGLETS ===================== -->
+  <nav class="tabbar" aria-label="Navigation principale">
+    <button class="tab active" data-view="accueil" aria-label="Accueil">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>
+      <span>Accueil</span>
+    </button>
+    <button class="tab" data-view="poids" aria-label="Poids">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h16M4 20a8 8 0 0 1 16 0M12 4l2 6h-4z"/></svg>
+      <span>Poids</span>
+    </button>
+    <button class="tab" data-view="alimentation" aria-label="Alimentation">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 2v9a3 3 0 0 0 6 0V2M9 2v20M18 2c-2 0-3 2-3 5s1 5 3 5v8"/></svg>
+      <span>Alim.</span>
+    </button>
+    <button class="tab" data-view="entrainement" aria-label="Entraînement">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9v6M18 9v6M3 12h3M18 12h3M6 9h2v6H6zM16 9h2v6h-2zM8 12h8"/></svg>
+      <span>Entr.</span>
+    </button>
+    <button class="tab" data-view="reperes" aria-label="Repères">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-4.5-7-10a7 7 0 0 1 14 0c0 5.5-7 10-7 10zM12 11v0M12 7.5v3"/></svg>
+      <span>Repères</span>
+    </button>
+    <button class="tab" data-view="parametres" aria-label="Paramètres">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8zM3 12h2M19 12h2M12 3v2M12 19v2M5 5l1.5 1.5M17.5 17.5L19 19M19 5l-1.5 1.5M6.5 17.5L5 19"/></svg>
+      <span>Réglages</span>
+    </button>
+  </nav>
+
+  <script src="./js/app.js"></script>
+</body>
+</html>

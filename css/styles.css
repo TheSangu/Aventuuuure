@@ -1,0 +1,254 @@
+/* ===================================================================
+   Destination Mystère — feuille de style
+   Palette sobre et froide : bleus profonds, blanc, vert progression.
+   Mobile-first, grandes zones tactiles, mode plein écran (standalone).
+   =================================================================== */
+
+:root {
+  --bg: #071a2e;
+  --bg-2: #0a2540;
+  --card: #0e2c4d;
+  --card-2: #123558;
+  --line: #1d4670;
+  --text: #eaf2fb;
+  --muted: #9bb6d2;
+  --accent: #2f7fd6;       /* bleu accent */
+  --accent-soft: #4a9ae8;
+  --green: #2ecc8f;        /* vert progression */
+  --green-soft: #54e0aa;
+  --danger: #e0586b;
+  --radius: 16px;
+  --tabbar-h: 64px;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.45;
+  -webkit-text-size-adjust: 100%;
+  overscroll-behavior-y: contain;
+}
+
+/* ---------- En-tête ---------- */
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  padding: calc(var(--safe-top) + 14px) 18px 12px;
+  background: linear-gradient(160deg, var(--bg-2), var(--bg));
+  border-bottom: 1px solid var(--line);
+  text-align: center;
+}
+.app-title {
+  margin: 0;
+  font-size: 1.35rem;
+  letter-spacing: 0.14em;
+  font-weight: 800;
+}
+.app-subtitle {
+  margin: 4px 0 0;
+  font-size: 0.78rem;
+  color: var(--muted);
+  letter-spacing: 0.02em;
+}
+
+/* ---------- Zone principale ---------- */
+.app-main {
+  padding: 16px 14px calc(var(--tabbar-h) + var(--safe-bottom) + 24px);
+  max-width: 640px;
+  margin: 0 auto;
+}
+.view { animation: fade 0.18s ease; }
+@keyframes fade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+.greeting { font-size: 1rem; color: var(--muted); margin: 2px 4px 12px; }
+
+/* ---------- Cartes ---------- */
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 14px;
+}
+.card h2 { margin: 0 0 10px; font-size: 1.02rem; font-weight: 700; }
+.card-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.card-head h2 { margin: 0; }
+
+.badge {
+  background: var(--green);
+  color: #06281c;
+  font-weight: 800;
+  font-size: 0.95rem;
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+.muted { color: var(--muted); font-size: 0.85rem; }
+
+/* ---------- Décompte ---------- */
+.countdown-card { text-align: center; background: linear-gradient(160deg, var(--card-2), var(--card)); }
+.countdown-main { display: flex; flex-direction: column; gap: 2px; }
+.countdown-number { font-size: 3rem; font-weight: 800; line-height: 1; color: var(--accent-soft); }
+.countdown-label { font-size: 0.85rem; color: var(--muted); }
+.countdown-sub { display: flex; justify-content: center; gap: 28px; margin-top: 14px; }
+.countdown-sub div { display: flex; flex-direction: column; }
+.countdown-sub strong { font-size: 1.3rem; }
+.countdown-sub span { font-size: 0.72rem; color: var(--muted); }
+
+/* ---------- Progression ---------- */
+.progress-track {
+  height: 16px;
+  background: var(--bg);
+  border-radius: 999px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+}
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--green), var(--green-soft));
+  border-radius: 999px;
+  transition: width 0.5s ease;
+}
+
+/* ---------- Grille de stats ---------- */
+.stat-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 14px; }
+.stat { background: var(--bg); border-radius: 12px; padding: 12px; text-align: center; }
+.stat-val { display: block; font-size: 1.25rem; font-weight: 700; }
+.stat-lbl { display: block; font-size: 0.72rem; color: var(--muted); margin-top: 2px; }
+@media (min-width: 460px) { .stat-grid { grid-template-columns: repeat(4, 1fr); } }
+
+/* ---------- Légende graphe ---------- */
+.legend { font-size: 0.72rem; color: var(--muted); display: flex; align-items: center; gap: 4px; }
+.dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin: 0 2px 0 8px; }
+.dot-line { background: var(--accent-soft); }
+.dot-avg { background: var(--green); }
+
+/* ---------- Graphe SVG ---------- */
+.chart-wrap { width: 100%; overflow: hidden; }
+.chart-wrap svg { width: 100%; height: auto; display: block; }
+.chart-empty { color: var(--muted); font-size: 0.85rem; text-align: center; padding: 24px 0; }
+
+/* ---------- Jalons ---------- */
+.next-milestone { font-size: 0.95rem; margin: 0 0 12px; color: var(--green-soft); font-weight: 600; }
+.milestones { list-style: none; margin: 0; padding: 0; }
+.milestones li {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 10px 0; border-top: 1px solid var(--line); font-size: 0.92rem;
+}
+.milestones li:first-child { border-top: none; }
+.milestones .done { color: var(--green); font-weight: 700; }
+.milestones .pending { color: var(--muted); }
+
+/* ---------- Formulaires ---------- */
+.form { display: flex; flex-direction: column; gap: 14px; }
+.form label { display: flex; flex-direction: column; gap: 6px; font-size: 0.82rem; color: var(--muted); }
+.form .opt { color: var(--accent-soft); font-size: 0.72rem; }
+.form input, .form textarea, .form select {
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  color: var(--text);
+  font-size: 1rem;
+  padding: 12px;
+  font-family: inherit;
+}
+.form input:focus, .form textarea:focus, .form select:focus {
+  outline: none; border-color: var(--accent);
+}
+.form textarea { resize: vertical; }
+
+/* ---------- Sélecteurs scorés (segments) ---------- */
+.scale { border: none; padding: 0; margin: 0; }
+.scale legend { font-size: 0.82rem; color: var(--muted); margin-bottom: 6px; padding: 0; }
+.seg { display: flex; gap: 8px; }
+.seg-wrap { flex-wrap: wrap; }
+.seg button {
+  flex: 1;
+  min-width: 44px;
+  min-height: 44px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  color: var(--text);
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+}
+.seg button.sel { background: var(--accent); border-color: var(--accent-soft); color: #fff; }
+
+/* ---------- Boutons ---------- */
+.btn-primary, .btn-secondary, .btn-danger {
+  min-height: 50px;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  width: 100%;
+}
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-secondary { background: var(--card-2); color: var(--text); border: 1px solid var(--line); }
+.btn-danger { background: var(--danger); color: #fff; }
+.btn-row { display: flex; gap: 10px; margin-top: 10px; }
+.btn-row .btn-secondary { width: auto; flex: 1; }
+.io-msg { font-size: 0.82rem; color: var(--green-soft); margin: 10px 0 0; min-height: 1em; }
+
+/* ---------- Listes / historiques ---------- */
+.list { display: flex; flex-direction: column; gap: 10px; }
+.list-item {
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 12px;
+}
+.list-item .li-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.list-item .li-date { font-size: 0.78rem; color: var(--muted); }
+.list-item .li-main { font-size: 1.05rem; font-weight: 700; }
+.list-item .li-meta { font-size: 0.82rem; color: var(--muted); margin-top: 4px; }
+.list-item .li-note { font-size: 0.85rem; margin-top: 6px; color: var(--text); white-space: pre-wrap; }
+.li-del {
+  background: transparent; border: none; color: var(--danger);
+  font-size: 0.8rem; padding: 6px 4px; cursor: pointer; min-height: 32px;
+}
+.list-empty { color: var(--muted); font-size: 0.85rem; text-align: center; padding: 16px 0; }
+
+.info-list { margin: 0; padding-left: 1.1em; }
+.info-list li { margin-bottom: 8px; }
+.disclaimer { font-size: 0.82rem; color: var(--muted); font-style: italic; }
+
+/* ---------- Barre d'onglets ---------- */
+.tabbar {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  z-index: 20;
+  display: flex;
+  background: var(--bg-2);
+  border-top: 1px solid var(--line);
+  padding-bottom: var(--safe-bottom);
+  height: calc(var(--tabbar-h) + var(--safe-bottom));
+}
+.tab {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 0.65rem;
+  cursor: pointer;
+  padding: 6px 0;
+}
+.tab svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.tab.active { color: var(--accent-soft); }
+.tab.active svg { stroke: var(--accent-soft); }
