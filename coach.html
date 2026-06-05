@@ -114,18 +114,31 @@
       $('#error').hidden=true;
       $('#status').textContent='Chargement…';
       try{
-        // API "contents" publique : pas de jeton nécessaire pour un dépôt public.
-        const url=`https://api.github.com/repos/${cfg.owner}/${cfg.repo}/contents/${encPath(cfg.path)}?ref=${encodeURIComponent(cfg.branch)}&t=${Date.now()}`;
-        const res=await fetch(url,{headers:{'Accept':'application/vnd.github.raw'},cache:'no-store'});
-        if(res.status===404){ $('#status').textContent='Aucune donnée pour le moment (le fichier n\'existe pas encore).'; return; }
-        if(!res.ok) throw new Error('HTTP '+res.status);
-        const parsed=JSON.parse(await res.text());
+        const parsed = await fetchData();
+        if(parsed===null){ $('#status').textContent='Aucune donnée pour le moment (le fichier n\'existe pas encore).'; return; }
         render(parsed);
       }catch(e){
         $('#status').textContent='';
         $('#error').hidden=false;
         $('#error').textContent='Impossible de charger les données : '+e.message+'. Vérifie owner/repo/branche/chemin et que le dépôt est public.';
       }
+    }
+
+    // Lecture sans jeton : raw.githubusercontent.com (CDN, CORS, sans quota),
+    // avec repli sur l'API "contents" publique. Renvoie l'objet, ou null si absent.
+    async function fetchData(){
+      const bust = 't=' + Date.now();
+      const rawUrl = `https://raw.githubusercontent.com/${cfg.owner}/${cfg.repo}/${cfg.branch}/${encPath(cfg.path)}?${bust}`;
+      try{
+        const r = await fetch(rawUrl, { cache:'no-store' });
+        if(r.status===404) return null;
+        if(r.ok) return JSON.parse(await r.text());
+      }catch(e){ /* on tente l'API */ }
+      const apiUrl = `https://api.github.com/repos/${cfg.owner}/${cfg.repo}/contents/${encPath(cfg.path)}?ref=${encodeURIComponent(cfg.branch)}&${bust}`;
+      const r2 = await fetch(apiUrl, { headers:{'Accept':'application/vnd.github.raw'}, cache:'no-store' });
+      if(r2.status===404) return null;
+      if(!r2.ok) throw new Error('HTTP '+r2.status);
+      return JSON.parse(await r2.text());
     }
 
     function render(parsed){
