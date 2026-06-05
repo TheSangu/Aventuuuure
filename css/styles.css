@@ -69,7 +69,12 @@ html, body {
 .view { animation: fade 0.18s ease; }
 @keyframes fade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
 
-.greeting { font-size: 1rem; color: var(--muted); margin: 2px 4px 12px; }
+.greeting { font-size: 1rem; color: var(--muted); margin: 2px 4px 6px; }
+.sync-indicator { font-size: 0.74rem; color: var(--accent-soft); margin: 0 4px 12px; min-height: 1em; }
+
+/* Case à cocher (réglages synchro) */
+.form .checkbox { flex-direction: row; align-items: center; gap: 10px; color: var(--text); font-size: 0.92rem; }
+.form .checkbox input { width: 22px; height: 22px; flex: 0 0 auto; }
 
 /* ---------- Cartes ---------- */
 .card {

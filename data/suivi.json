@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "majLe": "",
+  "data": {
+    "settings": {
+      "prenom": "",
+      "poidsDepart": 150,
+      "poidsCible": 100,
+      "dateDepart": "2026-06-03",
+      "dateExpedition": "2027-08-10",
+      "cibleCalories": ""
+    },
+    "poids": [],
+    "alimentation": [],
+    "entrainement": [],
+    "pas": []
+  }
+}

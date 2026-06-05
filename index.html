@@ -33,6 +33,7 @@
     <!-- -------- ACCUEIL / TABLEAU DE BORD -------- -->
     <section id="view-accueil" class="view" aria-label="Tableau de bord">
       <div id="dash-greeting" class="greeting"></div>
+      <div id="sync-indicator" class="sync-indicator"></div>
 
       <!-- Décompte -->
       <div class="card countdown-card">
@@ -74,11 +75,12 @@
 
       <!-- Entraînement 7 jours -->
       <div class="card">
-        <div class="card-head"><h2>Entraînement — 7 derniers jours</h2></div>
+        <div class="card-head"><h2>Activité — 7 derniers jours</h2></div>
         <div class="stat-grid">
           <div class="stat"><span class="stat-val" id="tr-seances">—</span><span class="stat-lbl">Séances</span></div>
           <div class="stat"><span class="stat-val" id="tr-duree">—</span><span class="stat-lbl">Durée totale</span></div>
           <div class="stat"><span class="stat-val" id="tr-distance">—</span><span class="stat-lbl">Distance cumulée</span></div>
+          <div class="stat"><span class="stat-val" id="tr-pas">—</span><span class="stat-lbl">Pas (7 j)</span></div>
         </div>
       </div>
 
@@ -99,6 +101,15 @@
         <label>Tour de taille (cm) <span class="opt">optionnel</span><input type="number" name="tourTaille" step="0.1" min="0" inputmode="decimal" /></label>
         <label>Note<textarea name="note" rows="2"></textarea></label>
         <button type="submit" class="btn-primary">Enregistrer</button>
+      </form>
+
+      <form id="form-pas" class="card form">
+        <h2>Pas du jour</h2>
+        <p class="muted">Recopie le nombre de pas affiché dans l'app Santé (ou laisse le Raccourci iPhone le faire).</p>
+        <label>Date<input type="date" name="date" required /></label>
+        <label>Nombre de pas<input type="number" name="pas" min="0" step="1" inputmode="numeric" /></label>
+        <button type="submit" class="btn-primary">Enregistrer les pas</button>
+        <div id="pas-list" class="list"></div>
       </form>
 
       <div class="card">
@@ -255,6 +266,29 @@
         <label>Date de l'expédition<input type="date" name="dateExpedition" required /></label>
         <label>Cible calorique / jour <span class="opt">optionnel</span><input type="number" name="cibleCalories" min="0" step="1" inputmode="numeric" /></label>
         <button type="submit" class="btn-primary">Enregistrer les paramètres</button>
+      </form>
+
+      <form id="form-sync" class="card form">
+        <h2>Synchronisation (dépôt distant)</h2>
+        <p class="muted">Envoie automatiquement les données vers GitHub (sauvegarde + suivi à distance). Le jeton reste sur cet appareil et n'est jamais partagé.</p>
+        <label>Jeton d'accès (token GitHub)
+          <input type="password" name="token" autocomplete="off" placeholder="github_pat_..." />
+        </label>
+        <label>Propriétaire (owner)<input type="text" name="owner" autocomplete="off" /></label>
+        <label>Dépôt (repo)<input type="text" name="repo" autocomplete="off" /></label>
+        <label>Branche<input type="text" name="branch" autocomplete="off" /></label>
+        <label>Chemin du fichier<input type="text" name="path" autocomplete="off" /></label>
+        <label class="checkbox">
+          <input type="checkbox" name="auto" />
+          <span>Envoi automatique après chaque saisie</span>
+        </label>
+        <button type="submit" class="btn-primary">Enregistrer la configuration</button>
+        <div class="btn-row">
+          <button id="btn-sync-push" type="button" class="btn-secondary">Envoyer maintenant</button>
+          <button id="btn-sync-pull" type="button" class="btn-secondary">Récupérer</button>
+        </div>
+        <p class="muted">Dernier envoi : <span id="sync-last">jamais</span></p>
+        <p id="sync-msg" class="io-msg" role="status"></p>
       </form>
 
       <div class="card">

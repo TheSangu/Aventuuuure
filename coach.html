@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Suivi — Vue coach</title>
+  <meta name="theme-color" content="#0a2540" />
+  <style>
+    :root{--bg:#071a2e;--bg2:#0a2540;--card:#0e2c4d;--line:#1d4670;--text:#eaf2fb;--muted:#9bb6d2;--accent:#4a9ae8;--green:#2ecc8f;--danger:#e0586b}
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.45}
+    header{padding:18px;text-align:center;background:linear-gradient(160deg,var(--bg2),var(--bg));border-bottom:1px solid var(--line)}
+    h1{margin:0;font-size:1.2rem;letter-spacing:.12em}
+    .sub{color:var(--muted);font-size:.78rem;margin-top:4px}
+    main{max-width:640px;margin:0 auto;padding:16px 14px 40px}
+    .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:14px}
+    .card h2{margin:0 0 10px;font-size:1rem}
+    .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+    @media(min-width:460px){.grid{grid-template-columns:repeat(4,1fr)}}
+    .stat{background:var(--bg);border-radius:12px;padding:12px;text-align:center}
+    .stat b{display:block;font-size:1.25rem}
+    .stat span{display:block;font-size:.72rem;color:var(--muted);margin-top:2px}
+    .track{height:16px;background:var(--bg);border:1px solid var(--line);border-radius:999px;overflow:hidden}
+    .fill{height:100%;background:linear-gradient(90deg,var(--green),#54e0aa);border-radius:999px;transition:width .5s}
+    .head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+    .badge{background:var(--green);color:#06281c;font-weight:800;padding:4px 10px;border-radius:999px}
+    .muted{color:var(--muted);font-size:.85rem}
+    svg{width:100%;height:auto;display:block}
+    input{background:var(--bg);border:1px solid var(--line);color:var(--text);border-radius:10px;padding:10px;font-size:.95rem;width:100%}
+    label{display:block;font-size:.78rem;color:var(--muted);margin-bottom:8px}
+    button{min-height:46px;border:none;border-radius:12px;background:var(--accent);color:#fff;font-weight:700;font-size:1rem;width:100%;cursor:pointer}
+    details summary{cursor:pointer;color:var(--muted);font-size:.85rem}
+    .err{color:var(--danger);font-size:.85rem}
+    .list-item{background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-top:8px;display:flex;justify-content:space-between}
+    .list-item .d{color:var(--muted);font-size:.78rem}
+  </style>
+</head>
+<body>
+  <header>
+    <h1>SUIVI — VUE COACH</h1>
+    <div class="sub" id="who">Lecture seule • mise à jour automatique</div>
+  </header>
+  <main>
+    <div class="card" id="status-card">
+      <p class="muted" id="status">Chargement…</p>
+      <p class="err" id="error" hidden></p>
+    </div>
+
+    <div class="card" id="dash" hidden>
+      <div class="head"><h2>Progression</h2><span class="badge" id="pct">0 %</span></div>
+      <div class="track"><div class="fill" id="fill" style="width:0%"></div></div>
+      <div class="grid" style="margin-top:14px">
+        <div class="stat"><b id="s-actuel">—</b><span>Poids actuel</span></div>
+        <div class="stat"><b id="s-perdu">—</b><span>Perdu</span></div>
+        <div class="stat"><b id="s-reste">—</b><span>Reste</span></div>
+        <div class="stat"><b id="s-jours">—</b><span>Jours avant départ</span></div>
+      </div>
+    </div>
+
+    <div class="card" id="chart-card" hidden>
+      <h2>Courbe du poids</h2>
+      <div id="chart"></div>
+    </div>
+
+    <div class="card" id="steps-card" hidden>
+      <div class="grid">
+        <div class="stat"><b id="s-pas7">—</b><span>Pas (7 j)</span></div>
+        <div class="stat"><b id="s-maj">—</b><span>Dernière saisie</span></div>
+      </div>
+    </div>
+
+    <div class="card" id="recent-card" hidden>
+      <h2>Dernières pesées</h2>
+      <div id="recent"></div>
+    </div>
+
+    <div class="card">
+      <button id="refresh">Rafraîchir</button>
+      <details style="margin-top:12px">
+        <summary>Réglages de la source</summary>
+        <div style="margin-top:10px">
+          <label>Owner<input id="cfg-owner" /></label>
+          <label>Repo<input id="cfg-repo" /></label>
+          <label>Branche<input id="cfg-branch" /></label>
+          <label>Chemin<input id="cfg-path" /></label>
+          <button id="cfg-save" style="margin-top:6px">Enregistrer</button>
+        </div>
+      </details>
+    </div>
+  </main>
+
+  <script>
+  (() => {
+    'use strict';
+    const KEY = 'coach-config';
+    const DEF = { owner:'thesangu', repo:'Aventuuuure', branch:'claude/stoic-goodall-cY7kL', path:'data/suivi.json' };
+    let cfg = Object.assign({}, DEF, JSON.parse(localStorage.getItem(KEY) || '{}'));
+
+    const $ = (s) => document.querySelector(s);
+    const num = (v,f=0)=>{const n=parseFloat(v);return Number.isFinite(n)?n:f;};
+    const parseISO = (iso)=>{if(!iso)return null;const[y,m,d]=iso.split('-').map(Number);return new Date(y,m-1,d);};
+    const todayISO = ()=>{const d=new Date();return new Date(d-d.getTimezoneOffset()*60000).toISOString().slice(0,10);};
+    const daysBetween=(a,b)=>Math.round((parseISO(b)-parseISO(a))/864e5);
+    const fmtKg=(v)=>(Math.round(v*10)/10).toFixed(1)+' kg';
+    const fmtDate=(iso)=>{const d=parseISO(iso);return d?d.toLocaleDateString('fr-FR',{day:'2-digit',month:'short',year:'numeric'}):'—';};
+    const encPath=(p)=>String(p).split('/').map(encodeURIComponent).join('/');
+
+    function fillCfg(){ $('#cfg-owner').value=cfg.owner; $('#cfg-repo').value=cfg.repo; $('#cfg-branch').value=cfg.branch; $('#cfg-path').value=cfg.path; }
+    fillCfg();
+    $('#cfg-save').addEventListener('click',()=>{cfg={owner:$('#cfg-owner').value.trim(),repo:$('#cfg-repo').value.trim(),branch:$('#cfg-branch').value.trim(),path:$('#cfg-path').value.trim()};localStorage.setItem(KEY,JSON.stringify(cfg));load();});
+    $('#refresh').addEventListener('click',load);
+
+    async function load(){
+      $('#error').hidden=true;
+      $('#status').textContent='Chargement…';
+      try{
+        // API "contents" publique : pas de jeton nécessaire pour un dépôt public.
+        const url=`https://api.github.com/repos/${cfg.owner}/${cfg.repo}/contents/${encPath(cfg.path)}?ref=${encodeURIComponent(cfg.branch)}&t=${Date.now()}`;
+        const res=await fetch(url,{headers:{'Accept':'application/vnd.github.raw'},cache:'no-store'});
+        if(res.status===404){ $('#status').textContent='Aucune donnée pour le moment (le fichier n\'existe pas encore).'; return; }
+        if(!res.ok) throw new Error('HTTP '+res.status);
+        const parsed=JSON.parse(await res.text());
+        render(parsed);
+      }catch(e){
+        $('#status').textContent='';
+        $('#error').hidden=false;
+        $('#error').textContent='Impossible de charger les données : '+e.message+'. Vérifie owner/repo/branche/chemin et que le dépôt est public.';
+      }
+    }
+
+    function render(parsed){
+      const data=parsed.data||parsed;
+      const s=data.settings||{};
+      const prenom=(s.prenom||'').trim();
+      $('#who').textContent = (prenom?prenom+' • ':'') + 'maj '+(parsed.majLe?new Date(parsed.majLe).toLocaleString('fr-FR'):'—');
+      $('#status').textContent='';
+
+      const poids=[...(data.poids||[])].sort((a,b)=>a.date.localeCompare(b.date));
+      const dep=num(s.poidsDepart,150),cible=num(s.poidsCible,100);
+      const actuel=poids.length?num(poids[poids.length-1].poids,dep):dep;
+      const prog=dep===cible?1:Math.max(0,Math.min(1,(dep-actuel)/(dep-cible)));
+      const pct=Math.round(prog*100);
+      $('#fill').style.width=pct+'%'; $('#pct').textContent=pct+' %';
+      $('#s-actuel').textContent=fmtKg(actuel);
+      $('#s-perdu').textContent=fmtKg(Math.max(0,dep-actuel));
+      $('#s-reste').textContent=fmtKg(Math.max(0,actuel-cible));
+      const jrs=daysBetween(todayISO(),s.dateExpedition||'2027-08-10');
+      $('#s-jours').textContent=jrs>=0?jrs:0;
+      $('#dash').hidden=false;
+
+      // Pas 7 j
+      const limite=new Date(parseISO(todayISO())-6*864e5);
+      const pas7=(data.pas||[]).filter(p=>parseISO(p.date)>=limite).reduce((t,p)=>t+num(p.pas),0);
+      $('#s-pas7').textContent=pas7.toLocaleString('fr-FR');
+      $('#s-maj').textContent=poids.length?fmtDate(poids[poids.length-1].date):'—';
+      $('#steps-card').hidden=false;
+
+      // Courbe
+      $('#chart').innerHTML=chart(poids,dep,cible);
+      $('#chart-card').hidden=poids.length===0;
+
+      // Dernières pesées
+      const recent=[...poids].reverse().slice(0,6);
+      $('#recent').innerHTML=recent.map(p=>`<div class="list-item"><b>${fmtKg(num(p.poids))}</b><span class="d">${fmtDate(p.date)}</span></div>`).join('')||'<p class="muted">—</p>';
+      $('#recent-card').hidden=poids.length===0;
+    }
+
+    function chart(tri,dep,cible){
+      if(!tri.length) return '';
+      const W=340,H=200,pad={t:14,r:12,b:24,l:38},iw=W-pad.l-pad.r,ih=H-pad.t-pad.b;
+      const vals=tri.map(p=>num(p.poids));
+      let min=Math.min(...vals,cible),max=Math.max(...vals,dep);
+      if(min===max){min-=1;max+=1;} const m=(max-min)*0.08||1; min-=m; max+=m;
+      const n=tri.length;
+      const x=i=>pad.l+(n===1?iw/2:(i/(n-1))*iw);
+      const y=v=>pad.t+ih-((v-min)/(max-min))*ih;
+      let grid='';
+      for(let t=0;t<=4;t++){const v=min+(t/4)*(max-min),yy=y(v);grid+=`<line x1="${pad.l}" y1="${yy}" x2="${W-pad.r}" y2="${yy}" stroke="#1d4670"/><text x="${pad.l-6}" y="${yy+3}" fill="#9bb6d2" font-size="9" text-anchor="end">${Math.round(v)}</text>`;}
+      let cl=''; if(cible>=min&&cible<=max){const yc=y(cible);cl=`<line x1="${pad.l}" y1="${yc}" x2="${W-pad.r}" y2="${yc}" stroke="#2ecc8f" stroke-dasharray="4 4" opacity=".7"/>`;}
+      const path=vals.map((v,i)=>`${i?'L':'M'}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ');
+      const pts=vals.map((v,i)=>`<circle cx="${x(i).toFixed(1)}" cy="${y(v).toFixed(1)}" r="2.5" fill="#4a9ae8"/>`).join('');
+      return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Courbe du poids">${grid}${cl}<path d="${path}" fill="none" stroke="#4a9ae8" stroke-width="2" stroke-linejoin="round"/>${pts}</svg>`;
+    }
+
+    load();
+    setInterval(load, 5*60*1000); // rafraîchit toutes les 5 minutes
+  })();
+  </script>
+</body>
+</html>

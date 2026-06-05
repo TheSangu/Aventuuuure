@@ -7,7 +7,7 @@
  * L'ancien cache est alors purgé lors de l'activation du nouveau worker.
  */
 
-const CACHE_VERSION = 'v1';
+const CACHE_VERSION = 'v2';
 const CACHE_NAME = `destination-mystere-${CACHE_VERSION}`;
 
 // App shell : tout ce qu'il faut pour démarrer l'app sans réseau.
@@ -15,6 +15,7 @@ const CACHE_NAME = `destination-mystere-${CACHE_VERSION}`;
 const APP_SHELL = [
   './',
   './index.html',
+  './coach.html',
   './css/styles.css',
   './js/app.js',
   './manifest.json',
