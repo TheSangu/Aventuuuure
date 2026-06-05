@@ -351,8 +351,37 @@
   // ---------------------------------------------------------------
   // Rendu : listes (poids, alimentation, entraînement)
   // ---------------------------------------------------------------
+  // Graphique en barres : pas par jour (SVG fait main).
+  function renderPasChart() {
+    const host = $('#pas-chart');
+    if (!host) return;
+    const arr = [...state.pas].sort((a, b) => a.date.localeCompare(b.date));
+    if (!arr.length) { host.innerHTML = '<p class="chart-empty">Aucun pas enregistré pour le moment.</p>'; return; }
+
+    const W = 340, H = 180, pad = { t: 14, r: 10, b: 26, l: 40 }, iw = W - pad.l - pad.r, ih = H - pad.t - pad.b;
+    const max = Math.max(...arr.map((p) => num(p.pas)), 1);
+    const n = arr.length;
+    const gap = n > 1 ? Math.min(8, (iw / n) * 0.25) : 0;
+    const bw = (iw - (n - 1) * gap) / n;
+
+    let grid = '';
+    for (let t = 0; t <= 3; t++) {
+      const v = (t / 3) * max, yy = pad.t + ih - (v / max) * ih;
+      grid += `<line x1="${pad.l}" y1="${yy}" x2="${W - pad.r}" y2="${yy}" stroke="#1d4670"/>`;
+      grid += `<text x="${pad.l - 6}" y="${yy + 3}" fill="#9bb6d2" font-size="9" text-anchor="end">${Math.round(v / 1000)}k</text>`;
+    }
+    const bars = arr.map((p, i) => {
+      const v = num(p.pas), h = (v / max) * ih, x = pad.l + i * (bw + gap), y = pad.t + ih - h;
+      return `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(0, h).toFixed(1)}" rx="2" fill="#4a9ae8"/>`;
+    }).join('');
+    const xl = `<text x="${pad.l}" y="${H - 8}" fill="#9bb6d2" font-size="9" text-anchor="start">${fmtDateShort(arr[0].date)}</text>` +
+      (n > 1 ? `<text x="${W - pad.r}" y="${H - 8}" fill="#9bb6d2" font-size="9" text-anchor="end">${fmtDateShort(arr[n - 1].date)}</text>` : '');
+    host.innerHTML = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Pas par jour">${grid}${bars}${xl}</svg>`;
+  }
+
   function renderPoids() {
     renderChart('#poids-chart');
+    renderPasChart();
     const tri = [...state.poids].sort((a, b) => b.date.localeCompare(a.date));
     const host = $('#poids-list');
     if (!tri.length) { host.innerHTML = '<p class="list-empty">Aucune pesée.</p>'; return; }
@@ -778,6 +807,7 @@
       setPas(f.date.value, f.pas.value);
       saveState();
       f.pas.value = '';
+      renderPasChart();
       renderPasList();
       renderDashboard();
       maybeAutoSync();

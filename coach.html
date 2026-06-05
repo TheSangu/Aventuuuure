@@ -69,8 +69,13 @@
       </div>
     </div>
 
+    <div class="card" id="steps-chart-card" hidden>
+      <h2>Pas par jour</h2>
+      <div id="steps-chart"></div>
+    </div>
+
     <div class="card" id="recent-card" hidden>
-      <h2>Dernières pesées</h2>
+      <h2>Historique quotidien</h2>
       <div id="recent"></div>
     </div>
 
@@ -168,15 +173,47 @@
       $('#s-maj').textContent=poids.length?fmtDate(poids[poids.length-1].date):'—';
       $('#steps-card').hidden=false;
 
-      // Courbe
+      // Courbe du poids
       $('#chart').innerHTML=chart(poids,dep,cible);
       $('#chart-card').hidden=poids.length===0;
 
-      // Dernières pesées
-      const recent=[...poids].reverse().slice(0,6);
-      $('#recent').innerHTML=recent.map(p=>`<div class="list-item"><b>${fmtKg(num(p.poids))}</b><span class="d">${fmtDate(p.date)}</span></div>`).join('')||'<p class="muted">—</p>';
-      $('#recent-card').hidden=poids.length===0;
+      // Graphique des pas par jour
+      const pas=[...(data.pas||[])].sort((a,b)=>a.date.localeCompare(b.date));
+      $('#steps-chart').innerHTML=barChart(pas);
+      $('#steps-chart-card').hidden=pas.length===0;
+
+      // Historique quotidien combiné (date · poids · pas), du plus récent au plus ancien
+      const parJour={};
+      poids.forEach(p=>{ (parJour[p.date]=parJour[p.date]||{}).poids=num(p.poids); });
+      pas.forEach(p=>{ (parJour[p.date]=parJour[p.date]||{}).pas=num(p.pas); });
+      const jours=Object.keys(parJour).sort((a,b)=>b.localeCompare(a));
+      $('#recent').innerHTML = jours.length ? jours.map(d=>`<div class="list-item">
+        <span class="d">${fmtDate(d)}</span>
+        <span>${parJour[d].poids!=null?'<b>'+fmtKg(parJour[d].poids)+'</b>':'<span class="d">—</span>'}
+        &nbsp;·&nbsp; ${parJour[d].pas!=null?parJour[d].pas.toLocaleString('fr-FR')+' pas':'<span class="d">—</span>'}</span>
+      </div>`).join('') : '<p class="muted">—</p>';
+      $('#recent-card').hidden = jours.length===0;
     }
+
+    // Graphique en barres : pas par jour.
+    function barChart(arr){
+      if(!arr.length) return '';
+      const W=340,H=180,pad={t:14,r:10,b:26,l:40},iw=W-pad.l-pad.r,ih=H-pad.t-pad.b;
+      const max=Math.max(...arr.map(p=>num(p.pas)),1);
+      const n=arr.length;
+      const gap=n>1?Math.min(8,iw/n*0.25):0;
+      const bw=(iw-(n-1)*gap)/n;
+      let grid='';
+      for(let t=0;t<=3;t++){const v=(t/3)*max,yy=pad.t+ih-(v/max)*ih;grid+=`<line x1="${pad.l}" y1="${yy}" x2="${W-pad.r}" y2="${yy}" stroke="#1d4670"/><text x="${pad.l-6}" y="${yy+3}" fill="#9bb6d2" font-size="9" text-anchor="end">${Math.round(v/1000)}k</text>`;}
+      const bars=arr.map((p,i)=>{
+        const v=num(p.pas),h=(v/max)*ih,x=pad.l+i*(bw+gap),y=pad.t+ih-h;
+        return `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(0,h).toFixed(1)}" rx="2" fill="#4a9ae8"/>`;
+      }).join('');
+      const xl=`<text x="${pad.l}" y="${H-8}" fill="#9bb6d2" font-size="9" text-anchor="start">${fmtDateShort(arr[0].date)}</text>`+
+        (n>1?`<text x="${W-pad.r}" y="${H-8}" fill="#9bb6d2" font-size="9" text-anchor="end">${fmtDateShort(arr[n-1].date)}</text>`:'');
+      return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Pas par jour">${grid}${bars}${xl}</svg>`;
+    }
+    function fmtDateShort(iso){const d=parseISO(iso);return d?d.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'}):'';}
 
     function chart(tri,dep,cible){
       if(!tri.length) return '';

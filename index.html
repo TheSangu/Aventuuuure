@@ -109,8 +109,13 @@
         <label>Date<input type="date" name="date" required /></label>
         <label>Nombre de pas<input type="number" name="pas" min="0" step="1" inputmode="numeric" /></label>
         <button type="submit" class="btn-primary">Enregistrer les pas</button>
-        <div id="pas-list" class="list"></div>
       </form>
+
+      <div class="card">
+        <div class="card-head"><h2>Pas par jour</h2></div>
+        <div id="pas-chart" class="chart-wrap"></div>
+        <div id="pas-list" class="list"></div>
+      </div>
 
       <div class="card">
         <div class="card-head"><h2>Évolution</h2>
