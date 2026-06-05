@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "majLe": "2026-06-05T18:40:18.807Z",
+  "majLe": "2026-06-05T18:40:49.221Z",
   "data": {
     "settings": {
       "prenom": "",
@@ -10,7 +10,15 @@
       "dateExpedition": "2027-08-10",
       "cibleCalories": ""
     },
-    "poids": [],
+    "poids": [
+      {
+        "id": "mq19s681tm2ah",
+        "date": "2026-06-05",
+        "poids": 150,
+        "tourTaille": "",
+        "note": ""
+      }
+    ],
     "alimentation": [
       {
         "id": "mpzu3ghypofky",
