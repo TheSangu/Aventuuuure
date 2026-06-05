@@ -69,8 +69,13 @@
       </div>
     </div>
 
+    <div class="card" id="pas7-card" hidden>
+      <h2>Pas — 7 derniers jours</h2>
+      <div id="pas7-chart"></div>
+    </div>
+
     <div class="card" id="steps-chart-card" hidden>
-      <h2>Pas par jour</h2>
+      <h2>Pas par jour (historique)</h2>
       <div id="steps-chart"></div>
     </div>
 
@@ -177,8 +182,12 @@
       $('#chart').innerHTML=chart(poids,dep,cible);
       $('#chart-card').hidden=poids.length===0;
 
-      // Graphique des pas par jour
+      // Pas des 7 derniers jours (jour par jour)
       const pas=[...(data.pas||[])].sort((a,b)=>a.date.localeCompare(b.date));
+      $('#pas7-chart').innerHTML=bar7(pas);
+      $('#pas7-card').hidden = pas.length===0;
+
+      // Graphique des pas par jour (historique complet)
       $('#steps-chart').innerHTML=barChart(pas);
       $('#steps-chart-card').hidden=pas.length===0;
 
@@ -214,6 +223,25 @@
       return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Pas par jour">${grid}${bars}${xl}</svg>`;
     }
     function fmtDateShort(iso){const d=parseISO(iso);return d?d.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'}):'';}
+    const isoOf=(d)=>new Date(d-d.getTimezoneOffset()*60000).toISOString().slice(0,10);
+
+    // 7 derniers jours (aujourd'hui inclus), une barre étiquetée par jour, 0 si absent.
+    function bar7(arr){
+      const map={}; arr.forEach(p=>map[p.date]=num(p.pas));
+      const t=parseISO(todayISO()); const serie=[];
+      for(let i=6;i>=0;i--){const d=new Date(t-i*864e5),iso=isoOf(d);serie.push({pas:map[iso]||0,label:d.toLocaleDateString('fr-FR',{weekday:'short'}).replace('.','')});}
+      if(serie.reduce((s,p)=>s+p.pas,0)===0) return '<p class="muted">Aucun pas sur les 7 derniers jours.</p>';
+      const W=340,H=170,pad={t:18,r:8,b:30,l:8},iw=W-pad.l-pad.r,ih=H-pad.t-pad.b;
+      const max=Math.max(...serie.map(p=>p.pas),1),slot=iw/7,bw=slot*0.6;
+      const bars=serie.map((p,i)=>{
+        const h=(p.pas/max)*ih,x=pad.l+i*slot+(slot-bw)/2,y=pad.t+ih-h;
+        const val=p.pas?p.pas.toLocaleString('fr-FR'):'';
+        return `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(0,h).toFixed(1)}" rx="3" fill="#4a9ae8"/>`+
+          (val?`<text x="${(x+bw/2).toFixed(1)}" y="${(y-4).toFixed(1)}" fill="#eaf2fb" font-size="8.5" text-anchor="middle">${val}</text>`:'')+
+          `<text x="${(x+bw/2).toFixed(1)}" y="${H-10}" fill="#9bb6d2" font-size="9" text-anchor="middle">${p.label}</text>`;
+      }).join('');
+      return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Pas des 7 derniers jours">${bars}</svg>`;
+    }
 
     function chart(tri,dep,cible){
       if(!tri.length) return '';

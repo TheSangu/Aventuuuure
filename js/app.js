@@ -244,9 +244,10 @@
     $('#tr-duree').textContent = e.duree + ' min';
     $('#tr-distance').textContent = (Math.round(e.distance * 10) / 10) + ' km';
 
-    // Pas 7 j
+    // Pas 7 j (total + détail jour par jour)
     const tp = $('#tr-pas');
     if (tp) tp.textContent = pas7j().toLocaleString('fr-FR');
+    renderPas7Chart();
 
     // Indicateur de synchro
     renderSyncStatus();
@@ -351,6 +352,49 @@
   // ---------------------------------------------------------------
   // Rendu : listes (poids, alimentation, entraînement)
   // ---------------------------------------------------------------
+  // Format ISO local (YYYY-MM-DD) d'un objet Date.
+  function isoOf(d) {
+    return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+  }
+
+  // Série des 7 derniers jours (aujourd'hui inclus), un point par jour,
+  // avec 0 pour les jours sans saisie.
+  function last7Pas() {
+    const map = {};
+    state.pas.forEach((p) => { map[p.date] = num(p.pas); });
+    const t = parseISO(todayISO());
+    const out = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(t.getTime() - i * 86400000);
+      const iso = isoOf(d);
+      out.push({ date: iso, pas: map[iso] || 0, label: d.toLocaleDateString('fr-FR', { weekday: 'short' }).replace('.', '') });
+    }
+    return out;
+  }
+
+  // Graphique « 7 derniers jours » : une barre étiquetée par jour.
+  function renderPas7Chart() {
+    const host = $('#pas7-chart');
+    if (!host) return;
+    const serie = last7Pas();
+    const total = serie.reduce((t, p) => t + p.pas, 0);
+    if (total === 0) { host.innerHTML = '<p class="chart-empty">Aucun pas sur les 7 derniers jours.</p>'; return; }
+
+    const W = 340, H = 170, pad = { t: 18, r: 8, b: 30, l: 8 }, iw = W - pad.l - pad.r, ih = H - pad.t - pad.b;
+    const max = Math.max(...serie.map((p) => p.pas), 1);
+    const slot = iw / 7, bw = slot * 0.6;
+    const bars = serie.map((p, i) => {
+      const h = (p.pas / max) * ih;
+      const x = pad.l + i * slot + (slot - bw) / 2;
+      const y = pad.t + ih - h;
+      const val = p.pas ? p.pas.toLocaleString('fr-FR') : '';
+      return `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(0, h).toFixed(1)}" rx="3" fill="#4a9ae8"/>` +
+        (val ? `<text x="${(x + bw / 2).toFixed(1)}" y="${(y - 4).toFixed(1)}" fill="#eaf2fb" font-size="8.5" text-anchor="middle">${val}</text>` : '') +
+        `<text x="${(x + bw / 2).toFixed(1)}" y="${H - 10}" fill="#9bb6d2" font-size="9" text-anchor="middle">${p.label}</text>`;
+    }).join('');
+    host.innerHTML = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Pas des 7 derniers jours">${bars}</svg>`;
+  }
+
   // Graphique en barres : pas par jour (SVG fait main).
   function renderPasChart() {
     const host = $('#pas-chart');
