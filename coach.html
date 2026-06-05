@@ -136,18 +136,19 @@
       }
     }
 
-    // Lecture sans jeton : raw.githubusercontent.com (CDN, CORS, sans quota),
-    // avec repli sur l'API "contents" publique. Renvoie l'objet, ou null si absent.
+    // Lecture sans jeton. On interroge d'ABORD l'API "contents" (pas de cache CDN,
+    // donc toujours à jour), avec repli sur raw.githubusercontent.com (CDN) en secours.
+    // Renvoie l'objet, ou null si le fichier n'existe pas.
     async function fetchData(){
       const bust = 't=' + Date.now();
-      const rawUrl = `https://raw.githubusercontent.com/${cfg.owner}/${cfg.repo}/${cfg.branch}/${encPath(cfg.path)}?${bust}`;
       try{
-        const r = await fetch(rawUrl, { cache:'no-store' });
+        const apiUrl = `https://api.github.com/repos/${cfg.owner}/${cfg.repo}/contents/${encPath(cfg.path)}?ref=${encodeURIComponent(cfg.branch)}&${bust}`;
+        const r = await fetch(apiUrl, { headers:{'Accept':'application/vnd.github.raw'}, cache:'no-store' });
         if(r.status===404) return null;
         if(r.ok) return JSON.parse(await r.text());
-      }catch(e){ /* on tente l'API */ }
-      const apiUrl = `https://api.github.com/repos/${cfg.owner}/${cfg.repo}/contents/${encPath(cfg.path)}?ref=${encodeURIComponent(cfg.branch)}&${bust}`;
-      const r2 = await fetch(apiUrl, { headers:{'Accept':'application/vnd.github.raw'}, cache:'no-store' });
+      }catch(e){ /* repli raw ci-dessous */ }
+      const rawUrl = `https://raw.githubusercontent.com/${cfg.owner}/${cfg.repo}/${cfg.branch}/${encPath(cfg.path)}?${bust}`;
+      const r2 = await fetch(rawUrl, { cache:'no-store' });
       if(r2.status===404) return null;
       if(!r2.ok) throw new Error('HTTP '+r2.status);
       return JSON.parse(await r2.text());
