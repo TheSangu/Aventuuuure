@@ -112,17 +112,28 @@ C'est une page **en lecture seule** (aucun jeton requis, lit le fichier public) 
 
 ## Récolte automatique des pas (Raccourci iPhone)
 
-Une app web ne peut pas lire l'app **Santé** d'Apple. On contourne avec un **Raccourci** (app *Raccourcis*) qui lit les pas et les envoie à l'app via l'URL.
+Une app web ne peut pas lire l'app **Santé** d'Apple, et sur iOS une app épinglée à
+l'écran d'accueil a un **stockage séparé de Safari**. La méthode fiable est donc que
+le **Raccourci écrive les pas directement sur GitHub** (un fichier par jour
+`data/pas/AAAA-MM-JJ.json`), sans passer par l'app. La page coach lit ces fichiers.
 
-1. App **Raccourcis** → **+** → ajouter les actions :
-   - **« Rechercher des échantillons de santé »** → Type : **Nombre de pas**, Trier par **Date de début**, Limite **aucune** sur **aujourd'hui** (ou « Obtenir la statistique de santé » → Pas → Aujourd'hui → Somme).
-   - **« Calculer la statistique »** / **« Obtenir le total »** pour additionner → variable **Pas**.
-   - **« Ouvrir les URL »** avec :
-     `https://<utilisateur>.github.io/<depot>/?pas=[Pas]`
-     (insérer la variable **Pas** à la place de `[Pas]`).
-2. **Automatisation** : onglet *Automatisation* → **+** → **Heure du jour** (ex. 22:00, chaque jour) → lancer ce raccourci.
+**Actions du Raccourci (app Raccourcis) :**
+1. **Rechercher des échantillons de santé** → Type : **Nombre de pas**, filtre **Date de début = aujourd'hui**.
+2. **Calculer la statistique** → **Somme** → (total des pas du jour).
+3. **Date** (date actuelle) → **Formater la date** : format personnalisé `yyyy-MM-dd` → variable **DATE**.
+4. **Texte** : `{"date":"DATE","pas":TOTAL}` (insérer les variables DATE et le total de l'étape 2).
+5. **Encoder** → **Base64** sur le Texte de l'étape 4 → variable **B64**.
+6. **Obtenir le contenu de l'URL** :
+   - URL : `https://api.github.com/repos/<owner>/<repo>/contents/data/pas/DATE.json` (insérer DATE)
+   - Méthode : **PUT**
+   - En-têtes : `Authorization` = `Bearer <jeton>`, `Accept` = `application/vnd.github+json`
+   - Corps : **JSON** → `message` = `pas DATE`, `content` = **B64**, `branch` = `<branche>`
 
-Au déclenchement, l'app s'ouvre une seconde, **enregistre les pas du jour** et les **synchronise** vers GitHub, puis nettoie l'URL. On peut aussi envoyer le poids de la même façon : `?poids=151.2` (ou combiner `?pas=8500&poids=151.2`).
+**Automatisation** : onglet *Automatisation* → **+** → **Heure du jour** (ex. **22:00**, chaque jour) → exécuter ce raccourci, et désactiver « Demander avant d'exécuter ».
+
+Chaque soir, les pas du jour sont écrits sur GitHub et apparaissent sur la page coach
+(et l'historique des pas). Lancer le raccourci une seconde fois le même jour ne
+réécrit pas la valeur (création seule) — l'exécution du soir suffit.
 
 ## Mettre à jour l'app
 
