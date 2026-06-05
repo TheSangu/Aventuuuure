@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "majLe": "",
+  "majLe": "2026-06-05T18:10:57.297Z",
   "data": {
     "settings": {
       "prenom": "",
@@ -11,8 +11,36 @@
       "cibleCalories": ""
     },
     "poids": [],
-    "alimentation": [],
-    "entrainement": [],
+    "alimentation": [
+      {
+        "id": "mpzu3ghypofky",
+        "date": "2026-06-04",
+        "petitDejeuner": "3 œuf au plat 2 Knacky",
+        "dejeuner": "3rostis miettes de crabe fromage",
+        "diner": "Salade de patate et salade de fruits",
+        "collations": "Kinder ( fait bien les finir)",
+        "proteines": 3,
+        "legumesFruits": "",
+        "eau": 2,
+        "calories": "",
+        "faim": 3,
+        "energie": 3,
+        "note": "Peut être améliorer, je finis des reste, prévoir des fruit pour après la salle"
+      }
+    ],
+    "entrainement": [
+      {
+        "id": "mpzu5cznh8edy",
+        "date": "2026-06-04",
+        "type": "Renforcement",
+        "duree": 60,
+        "distance": "",
+        "chargeSac": "",
+        "denivele": "",
+        "rpe": 6,
+        "note": "Séance dos bras"
+      }
+    ],
     "pas": []
   }
 }
