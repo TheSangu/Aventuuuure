@@ -1,18 +1,28 @@
 {
   "version": 1,
-  "majLe": "",
+  "majLe": "2026-06-05T20:30:00.000Z",
   "data": {
     "settings": {
-      "prenom": "",
-      "poidsDepart": 150,
+      "prenom": "Nico",
+      "poidsDepart": 152,
       "poidsCible": 100,
       "dateDepart": "2026-06-03",
       "dateExpedition": "2027-08-10",
       "cibleCalories": ""
     },
-    "poids": [],
+    "poids": [
+      { "id": "a1", "date": "2026-06-03", "poids": 152.0, "tourTaille": 118, "note": "départ" },
+      { "id": "a2", "date": "2026-06-04", "poids": 151.6, "tourTaille": "", "note": "" },
+      { "id": "a3", "date": "2026-06-05", "poids": 151.1, "tourTaille": 117, "note": "bonne forme" }
+    ],
     "alimentation": [],
-    "entrainement": [],
-    "pas": []
+    "entrainement": [
+      { "id": "e1", "date": "2026-06-04", "type": "Marche chargée", "duree": 45, "distance": 4.2, "chargeSac": 8, "denivele": 120, "rpe": 6, "note": "" }
+    ],
+    "pas": [
+      { "id": "p1", "date": "2026-06-03", "pas": 7200 },
+      { "id": "p2", "date": "2026-06-04", "pas": 8500 },
+      { "id": "p3", "date": "2026-06-05", "pas": 6100 }
+    ]
   }
 }
