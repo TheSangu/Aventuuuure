@@ -126,6 +126,8 @@
       try{
         const parsed = await fetchData();
         if(parsed===null){ $('#status').textContent='Aucune donnée pour le moment (le fichier n\'existe pas encore).'; return; }
+        // Fusionne les pas envoyés par le Raccourci (fichiers data/pas/<date>.json)
+        try { await mergeShortcutSteps(parsed); } catch(e){ /* pas bloquant */ }
         render(parsed);
       }catch(e){
         $('#status').textContent='';
@@ -149,6 +151,23 @@
       if(r2.status===404) return null;
       if(!r2.ok) throw new Error('HTTP '+r2.status);
       return JSON.parse(await r2.text());
+    }
+
+    // Récupère les pas écrits par le Raccourci iPhone (un fichier data/pas/<date>.json
+    // par jour) sur les 30 derniers jours, et les fusionne dans data.pas.
+    async function mergeShortcutSteps(parsed){
+      const data = parsed.data || parsed;
+      data.pas = Array.isArray(data.pas) ? data.pas : [];
+      const map = {}; data.pas.forEach(p=>{ map[p.date]=num(p.pas); });
+      const t = parseISO(todayISO()); const dates=[];
+      for(let i=0;i<30;i++) dates.push(isoOf(new Date(t - i*864e5)));
+      const res = await Promise.all(dates.map(async d=>{
+        const url = `https://raw.githubusercontent.com/${cfg.owner}/${cfg.repo}/${cfg.branch}/data/pas/${d}.json?t=${Date.now()}`;
+        try{ const r=await fetch(url,{cache:'no-store'}); if(!r.ok) return null; const j=JSON.parse(await r.text()); return (j&&j.date)?{date:j.date,pas:num(j.pas)}:null; }
+        catch(e){ return null; }
+      }));
+      res.filter(Boolean).forEach(p=>{ map[p.date]=p.pas; }); // le Raccourci fait foi
+      data.pas = Object.keys(map).map(d=>({date:d,pas:map[d]}));
     }
 
     function render(parsed){
