@@ -1,0 +1,132 @@
+<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="ProgId" content="Word.Document">
+<title>Guide - Envoyer mes pas</title>
+<!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom></w:WordDocument></xml><![endif]-->
+<style>
+@page { size: A4; margin: 2cm 2cm; }
+body { font-family: Calibri, Arial, sans-serif; font-size: 12pt; color: #1b1b1b; line-height: 1.5; }
+h1.title { font-size: 24pt; color: #0a2540; margin: 0 0 4pt 0; }
+p.lead { color: #6b7280; font-size: 11pt; margin: 0 0 18pt 0; }
+h2 { font-size: 15pt; color: #0a2540; border-bottom: 2px solid #2f7fd6; padding-bottom: 3pt; margin: 22pt 0 10pt 0; }
+h3 { font-size: 12.5pt; color: #2f7fd6; margin: 14pt 0 6pt 0; }
+p { margin: 0 0 9pt 0; }
+ol { margin: 0 0 10pt 0; padding-left: 22pt; }
+ol li { margin: 0 0 9pt 0; }
+ul { margin: 4pt 0 10pt 0; padding-left: 20pt; }
+ul li { margin: 0 0 5pt 0; }
+.code { font-family: Consolas, 'Courier New', monospace; font-size: 10.5pt; background: #f2f4f7; border: 1px solid #d0d7de; padding: 6pt 8pt; margin: 4pt 0 10pt 0; }
+.note { color: #6b7280; font-size: 10.5pt; }
+.box { background: #eef6ff; border: 1px solid #b9d8f7; padding: 8pt 10pt; margin: 0 0 16pt 0; }
+.ok { color: #1f9d63; font-weight: bold; }
+b { color: #0a2540; }
+code { font-family: Consolas, 'Courier New', monospace; background: #f2f4f7; padding: 0 2pt; }
+</style>
+</head>
+<body>
+
+<h1 class="title">Envoyer mes pas automatiquement</h1>
+<p class="lead">Guide pas a pas — a faire une seule fois (environ 10 minutes).</p>
+
+<div class="box">
+<p style="margin:0 0 6pt 0;"><b>Avant de commencer</b> : recupere le « jeton » que ton ami t'a transmis (un texte qui commence par <code>github_pat_</code>). Tu le colleras a l'etape 11.</p>
+<p style="margin:0;">Garde aussi ces deux valeurs sous les yeux :</p>
+<div class="code">Adresse : https://api.github.com/repos/thesangu/Aventuuuure/contents/data/pas/</div>
+<div class="code">Branche : claude/stoic-goodall-cY7kL</div>
+</div>
+
+<h2>Partie A — Creer le raccourci</h2>
+<ol>
+<li>Ouvre l'application <b>Raccourcis</b> (icone grise avec deux carres colores).</li>
+<li>En bas, choisis l'onglet <b>Raccourcis</b>, puis touche le <b>+</b> en haut a droite.</li>
+<li>Touche <b>Ajouter une action</b>. Pour chaque action ci-dessous, tape son nom dans la <b>barre de recherche</b> en bas, puis touche-la.</li>
+</ol>
+
+<h3>Action 1 — lire les pas</h3>
+<ul>
+<li>Cherche <b>« Rechercher des echantillons de sante »</b> et ajoute-la.</li>
+<li>Touche <b>Type</b> puis choisis <b>Nombre de pas</b>.</li>
+<li>Touche <b>Ajouter un filtre</b> puis <b>Date de debut</b> &gt; <b>est</b> &gt; <b>aujourd'hui</b>.</li>
+</ul>
+
+<h3>Action 2 — additionner</h3>
+<ul>
+<li>Cherche <b>« Calculer la statistique »</b>.</li>
+<li>Regle l'operation sur <b>Somme</b> (le reste se remplit tout seul).</li>
+</ul>
+
+<h3>Action 3 — la date</h3>
+<ul>
+<li>Cherche <b>« Date »</b> (elle donne la date du jour).</li>
+</ul>
+
+<h3>Action 4 — mettre la date au bon format</h3>
+<ul>
+<li>Cherche <b>« Formater la date »</b>.</li>
+<li>Touche le format puis <b>Personnalise</b>, et ecris exactement :</li>
+</ul>
+<div class="code">yyyy-MM-dd</div>
+
+<h3>Action 5 — preparer le texte</h3>
+<ul>
+<li>Cherche <b>« Texte »</b>. Dans le cadre, tu vas ecrire la ligne ci-dessous.</li>
+<li><span class="note">Astuce : pour inserer un resultat precedent, touche le <b>bouton variable</b> au-dessus du clavier.</span></li>
+<li>Ecris <code>{"date":"</code> puis insere la variable <b>Date formatee</b>, puis <code>","pas":</code> puis insere la variable <b>Statistique</b>, puis <code>}</code>.</li>
+</ul>
+<p class="note">Le resultat doit ressembler a ceci :</p>
+<div class="code">{"date":"[Date formatee]","pas":[Statistique]}</div>
+
+<h3>Action 6 — encoder</h3>
+<ul>
+<li>Cherche <b>« base64 »</b> et choisis <b>« Encoder le texte »</b>. Elle prend automatiquement le texte de l'action 5.</li>
+</ul>
+
+<h2>Partie B — L'envoi vers GitHub</h2>
+<h3>Action 7 — Obtenir le contenu de l'URL</h3>
+<ol start="7">
+<li>Cherche <b>« Obtenir le contenu de l'URL »</b> et ajoute-la.</li>
+<li>Dans le champ <b>URL</b>, ecris l'adresse, insere la variable <b>Date formatee</b>, puis <code>.json</code> :
+<div class="code">https://api.github.com/repos/thesangu/Aventuuuure/contents/data/pas/[Date formatee].json</div></li>
+<li>Touche <b>Afficher plus</b>.</li>
+<li><b>Methode</b> : choisis <b>PUT</b>.</li>
+<li><b>En-tetes</b> : touche <b>Ajouter un en-tete</b> DEUX fois :
+<ul>
+<li>Cle <code>Authorization</code> &nbsp;&gt;&nbsp; Valeur <code>Bearer github_pat_</code>...<br>
+<span class="note">(garde le mot <code>Bearer</code> et une espace avant le jeton)</span></li>
+<li>Cle <code>Accept</code> &nbsp;&gt;&nbsp; Valeur <code>application/vnd.github+json</code></li>
+</ul></li>
+<li><b>Corps de la requete</b> : choisis <b>JSON</b>, puis <b>Ajouter un champ</b> TROIS fois :
+<ul>
+<li>Type <b>Texte</b> — nom <code>message</code> — valeur <code>pas</code></li>
+<li>Type <b>Texte</b> — nom <code>content</code> — valeur : insere la variable <b>Texte encode</b> (action 6)</li>
+<li>Type <b>Texte</b> — nom <code>branch</code> — valeur <code>claude/stoic-goodall-cY7kL</code></li>
+</ul></li>
+<li>En haut, donne un nom au raccourci (ex. <b>Envoyer mes pas</b>) puis touche <b>OK</b>.</li>
+</ol>
+
+<h2>Partie C — Tester</h2>
+<ol start="14">
+<li>Lance le raccourci en le touchant.</li>
+<li>La premiere fois, l'iPhone demande l'acces a <b>Sante</b> : touche <b>Autoriser</b>.</li>
+<li>S'il n'y a <b>pas de message rouge</b>, c'est reussi. <span class="ok">OK !</span> Tes pas apparaitront sur l'ecran de suivi de ton ami dans la minute.</li>
+</ol>
+
+<h2>Partie D — Le rendre automatique chaque jour</h2>
+<ol start="17">
+<li>Dans <b>Raccourcis</b>, va dans l'onglet <b>Automatisation</b> (en bas), puis touche <b>+</b>.</li>
+<li>Choisis <b>Heure du jour</b>, regle <b>22:00</b>, <b>Quotidiennement</b>, puis <b>Suivant</b>.</li>
+<li>Choisis <b>Executer le raccourci</b>, puis selectionne <b>Envoyer mes pas</b>.</li>
+<li>Desactive <b>Demander avant d'executer</b> et confirme.</li>
+</ol>
+<p class="ok">Termine ! Chaque soir a 22 h, tes pas s'envoient tout seuls.</p>
+
+<h2>En cas de souci</h2>
+<ul>
+<li>Message rouge au test : verifie l'adresse (aucune espace, bien <code>.json</code> a la fin).</li>
+<li>Verifie que la valeur de <code>Authorization</code> commence bien par <code>Bearer </code> (avec l'espace).</li>
+<li>Verifie que les trois champs JSON s'appellent exactement <code>message</code>, <code>content</code>, <code>branch</code>.</li>
+</ul>
+
+</body>
+</html>
