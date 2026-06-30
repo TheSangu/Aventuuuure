@@ -23,7 +23,7 @@ IBAN_RE = re.compile(r'\bFR\d{2}[\s]?[\dA-Z]{4}[\s]?[\dA-Z]{4}[\s]?[\dA-Z]{4}[\s
 
 REGLES = [
     ("Léo Le Psycho", "Bip Bap BOOM"),
-    (IBAN_RE,         "Attention à ne pas faire"),
+    (IBAN_RE,         "FR7610011000201234567890188"),
 ]
 
 INTERVALLE = 0.5
@@ -31,7 +31,7 @@ INTERVALLE = 0.5
 print("🎯 Surveillance du presse-papier active...")
 print("   Règles actives :")
 print('   • "Léo Le Psycho"  →  "Bip Bap BOOM"')
-print('   • RIB/IBAN         →  "Attention à ne pas faire"')
+print('   • RIB/IBAN         →  ton IBAN à toi')
 print("   Appuie sur Ctrl+C pour arrêter.\n")
 
 dernier_contenu = ""
