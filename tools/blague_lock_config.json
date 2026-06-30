@@ -1,0 +1,8 @@
+{
+    "token": "REMPLACER_PAR_TON_TOKEN_GITHUB",
+    "owner": "thesangu",
+    "repo": "Aventuuuure",
+    "branch": "main",
+    "lock_path": "data/blague_lock.json",
+    "code_secret": "REMPLACER_PAR_TON_CODE_SECRET"
+}
