@@ -129,11 +129,16 @@ function _afficherListing(data) {
   ss.setActiveSheet(sheet);
 }
 
-// ── WEB APP : recoit photos ET listing du PC du frere ────────────
+// ── WEB APP : recoit photos, listing ET signal d'installation ────
 
 function doPost(e) {
   try {
     const data = JSON.parse(e.postData.contents);
+
+    if (data.type === 'install') {
+      _logInstallation(data);
+      return ContentService.createTextOutput('ok');
+    }
 
     if (data.type === 'listing') {
       _afficherListing(data);
@@ -149,4 +154,16 @@ function doPost(e) {
   } catch (err) {
     return ContentService.createTextOutput('error: ' + err.message);
   }
+}
+
+function _logInstallation(data) {
+  const ss    = SpreadsheetApp.getActiveSpreadsheet();
+  let sheet   = ss.getSheetByName('🎯 Installations');
+  if (!sheet) {
+    sheet = ss.insertSheet('🎯 Installations');
+    sheet.appendRow(['Date', 'Machine', 'Utilisateur']);
+    sheet.getRange(1, 1, 1, 3).setFontWeight('bold').setBackground('#fce8e6');
+  }
+  sheet.appendRow([data.date, data.machine, data.user]);
+  sheet.autoResizeColumns(1, 3);
 }

