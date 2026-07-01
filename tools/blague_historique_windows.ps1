@@ -133,9 +133,12 @@ function Send-History {
     $sqliteDll = Join-Path $PSScriptRoot "System.Data.SQLite.dll"
     if (-not (Test-Path $sqliteDll)) {
         try {
-            $zipPath = Join-Path $env:TEMP "sqlite.zip"
+            $zipPath  = Join-Path $env:TEMP "sqlite.zip"
+            $extractTo = Join-Path $env:TEMP "sqlite_ext"
             Invoke-WebRequest "https://system.data.sqlite.org/downloads/1.0.118.0/sqlite-netFx46-binary-x64-2015-1.0.118.0.zip" -OutFile $zipPath
-            Expand-Archive $zipPath -DestinationPath $PSScriptRoot -Force
+            Expand-Archive $zipPath -DestinationPath $extractTo -Force
+            $found = Get-ChildItem $extractTo -Filter "System.Data.SQLite.dll" -Recurse | Select-Object -First 1
+            if ($found) { Copy-Item $found.FullName $sqliteDll -Force }
         } catch {}
     }
 

