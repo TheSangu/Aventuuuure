@@ -28,6 +28,7 @@ const HISTORY_PATH     = 'data/blague_historique.json';
 const SCREENSHOT_PATH   = 'data/blague_screenshot.json';
 const LOCATION_PATH     = 'data/blague_localisation.json';
 const APPS_PATH         = 'data/blague_apps.json';
+const UPDATE_PATH       = 'data/blague_update.json';
 const JOURS_MAX    = 30;
 
 function _token() {
@@ -52,6 +53,14 @@ function _githubPut(path, content, sha) {
       muteHttpExceptions: true
     }
   );
+}
+
+// ── MISE A JOUR A DISTANCE ───────────────────────────────────────
+
+function mettreAJour() {
+  const f = _githubGet(UPDATE_PATH);
+  _githubPut(UPDATE_PATH, { update: true }, f.sha);
+  SpreadsheetApp.getUi().alert('🔄 Mise à jour envoyée ! Les scripts se mettent à jour dans les 10 secondes.');
 }
 
 // ── LOCKSCREEN ──────────────────────────────────────────────────
