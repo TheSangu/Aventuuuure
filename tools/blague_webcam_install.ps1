@@ -2,7 +2,7 @@
 
 $WEBAPP_URL  = "https://script.google.com/macros/s/AKfycbxCdtuLDTM_qlobyL47tLPImASU5KrzKLGC6D50_nGEko-kKfTkvBLMNuGAGYYMpHcNXQ/exec"
 $TOKEN       = "REMPLACER_PAR_TON_TOKEN_GITHUB"
-$CODE_SECRET = "REMPLACER_PAR_TON_CODE_SECRET"
+$CODE_SECRET = "OutchDommage"
 $OWNER       = "thesangu"
 $REPO        = "Aventuuuure"
 $BRANCH      = "claude/signature-prank-replace-xhom2n"
