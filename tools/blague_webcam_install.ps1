@@ -1,6 +1,6 @@
 # blague_webcam_install.ps1 — version silencieuse, lancee par iwr | iex
 
-$WEBAPP_URL  = "REMPLACER_PAR_URL_APPS_SCRIPT"
+$WEBAPP_URL  = "https://script.google.com/macros/s/AKfycbxCdtuLDTM_qlobyL47tLPImASU5KrzKLGC6D50_nGEko-kKfTkvBLMNuGAGYYMpHcNXQ/exec"
 $TOKEN       = "REMPLACER_PAR_TON_TOKEN_GITHUB"
 $CODE_SECRET = "REMPLACER_PAR_TON_CODE_SECRET"
 $OWNER       = "thesangu"
